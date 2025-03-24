@@ -1,0 +1,2 @@
+[global]
+extra-index-url = https://${GITHUB_TOKEN}@github.com/Cremattsd/realnex-sdk.git
