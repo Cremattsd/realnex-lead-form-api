@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
-from real_nex_sync_api_data_facade.sdk import RealNexClient
+from real_nex_sync_api_data_facade.services.crm_contact import ContactService
+from real_nex_sync_api_data_facade.services.crm_company import CompanyService
+from real_nex_sync_api_data_facade.services.crm_history import HistoryService
 
 app = Flask(__name__)
 
@@ -15,24 +17,34 @@ def submit_lead():
         if not token:
             return jsonify({'error': 'Missing token'}), 400
 
-        client = RealNexClient(token=token)
+        # Init services with token
+        contact_service = ContactService(token)
+        company_service = CompanyService(token)
+        history_service = HistoryService(token)
 
-        # Match or create contact
-        contact = client.find_contact(email=data['email'])
+        # 1. Try to match an existing contact
+        contact = contact_service.find_by_email(data['email'])
+
+        # 2. If not found, create a new contact
         if not contact:
-            contact = client.create_contact({
+            contact_payload = {
                 'first_name': data['first_name'],
                 'last_name': data['last_name'],
                 'email': data['email'],
                 'phone': data['phone']
-            })
+            }
 
-        # Add history record
-        client.add_history({
+            # Optional: add company association logic here using CompanyService
+            contact = contact_service.create(contact_payload)
+
+        # 3. Add history event to the contact
+        history_payload = {
             'contact_id': contact['id'],
             'event_type': 'Lead Web Form',
-            'notes': data['comments']
-        })
+            'notes': data.get('comments', '')
+        }
+
+        history_service.create(history_payload)
 
         return jsonify({'status': 'success'}), 200
 
