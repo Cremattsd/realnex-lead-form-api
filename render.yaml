@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: realnex-lead-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: GITHUB_TOKEN
+        sync: false
