@@ -1,4 +1,4 @@
 Flask
 gunicorn
 flask-cors
-real_nex_sync_api_data_facade @ git+https://<YOUR_GITHUB_PAT>@github.com/Cremattsd/realnex-sdk.git@main#egg=_
+real_nex_sync_api_data_facade @ git+https://$GITHUB_TOKEN@github.com/Cremattsd/realnex-sdk.git@main#egg=realnex_sdk
