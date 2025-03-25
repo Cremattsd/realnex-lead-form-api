@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
-from real_nex_sync_api_data_facade.services.crm_contact import ContactService
-from real_nex_sync_api_data_facade.services.crm_company import CompanyService
-from real_nex_sync_api_data_facade.services.crm_history import HistoryService
+from real_nex_sync_api_data_facade.services.crm_contact import ContactCRM
+from real_nex_sync_api_data_facade.services.crm_company import CompanyCRM
+from real_nex_sync_api_data_facade.services.crm_history import HistoryCRM
 
 app = Flask(__name__)
 
@@ -17,33 +17,30 @@ def submit_lead():
         if not token:
             return jsonify({'error': 'Missing token'}), 400
 
-        # Init services with token
-        contact_service = ContactService(token)
-        company_service = CompanyService(token)
-        history_service = HistoryService(token)
+        # Initialize SDK service classes
+        contact_service = ContactCRM(token)
+        company_service = CompanyCRM(token)
+        history_service = HistoryCRM(token)
 
-        # 1. Try to match an existing contact
+        # Try to find existing contact
         contact = contact_service.find_by_email(data['email'])
 
-        # 2. If not found, create a new contact
+        # If not found, create contact
         if not contact:
             contact_payload = {
-                'first_name': data['first_name'],
-                'last_name': data['last_name'],
-                'email': data['email'],
-                'phone': data['phone']
+                'first_name': data.get('first_name', ''),
+                'last_name': data.get('last_name', ''),
+                'email': data.get('email', ''),
+                'phone': data.get('phone', '')
             }
-
-            # Optional: add company association logic here using CompanyService
             contact = contact_service.create(contact_payload)
 
-        # 3. Add history event to the contact
+        # Add a history entry
         history_payload = {
             'contact_id': contact['id'],
             'event_type': 'Lead Web Form',
             'notes': data.get('comments', '')
         }
-
         history_service.create(history_payload)
 
         return jsonify({'status': 'success'}), 200
