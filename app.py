@@ -47,4 +47,14 @@ def create_contact():
         contact_data = CreateContact(
             first_name=request.form["first_name"],
             last_name=request.form["last_name"],
-            email=request.form["
+            email=request.form["email"],
+            phone=request.form.get("phone", "")
+        )
+        service = CrmContactService(base_url="https://api.realnex.com", token=token)
+        response = service.post_contact_async(contact_data)
+        return jsonify({"message": "Contact submitted successfully!", "response": response.to_dict()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(debug=True)
