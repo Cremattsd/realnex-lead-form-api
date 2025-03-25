@@ -1,42 +1,39 @@
-from flask import Flask, request, jsonify
-from realnex_sdk import RealNexSyncApiDataFacade  # Import your SDK
 import os
+from flask import Flask, request, jsonify
+from realnex_sdk import RealNexSyncApiDataFacade  # Import the SDK for RealNex integration
 
 app = Flask(__name__)
 
-# Use your real base URL and RealNex token
-REALNEX_BASE_URL = "https://api.realnex.com"  # Set this to your actual API base URL
-REALNEX_TOKEN = os.environ.get('REALNEX_TOKEN', 'your_realnex_token_here')  # Make sure this is your actual token
-
-# Initialize the SDK instance
-realnex_sdk = RealNexSyncApiDataFacade(
-    api_key=REALNEX_TOKEN, 
-    base_url=REALNEX_BASE_URL
-)
+# Access GITHUB_TOKEN environment variable (in case it's needed for SDK access)
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 
 @app.route('/submit-lead', methods=['POST'])
 def submit_lead():
-    data = request.json
+    # Retrieve data from the form submission
+    data = request.get_json()
     token = data.get('token')
     first_name = data.get('first_name')
     last_name = data.get('last_name')
     email = data.get('email')
     phone = data.get('phone')
     comments = data.get('comments')
-
-    if token != REALNEX_TOKEN:
-        return jsonify({"error": "Invalid token"}), 400
-
+    
+    # Initialize the RealNex API client
     try:
-        # Example API Call: Fetching contact details (Replace with your actual logic)
-        contact_service = realnex_sdk.crm_contact
-        contact = contact_service.get_contact_async(contact_key=first_name)  # Adjust as needed
+        # This assumes your RealNexSyncApiDataFacade has a method that allows integration
+        # If the token is being used to interact with RealNex, you can pass it here
+        realnex_api = RealNexSyncApiDataFacade(base_url="https://api.realnex.com/", token=token)
 
-        return jsonify({"message": "Lead submitted successfully!", "contact": contact}), 200
+        # Add lead or relevant data to RealNex CRM (this depends on the actual SDK functionality)
+        response = realnex_api.submit_lead(first_name, last_name, email, phone, comments)
 
+        # Respond with a success message and the API response from RealNex
+        return jsonify({"status": "success", "message": "Lead submitted to RealNex", "realnex_response": response})
+    
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+        # Handle any exceptions that occur during the API call
+        return jsonify({"status": "error", "message": str(e)})
 
 if __name__ == '__main__':
+    # Running the Flask app in debug mode
     app.run(debug=True)
