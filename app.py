@@ -1,47 +1,64 @@
-from flask import Flask, render_template, request, jsonify
-import requests
-import os
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+from real_nex_sync_api_data_facade.services.crm_contact import ContactService
+from real_nex_sync_api_data_facade.services.crm_company import CompanyService
+from real_nex_sync_api_data_facade.services.crm_history import HistoryService
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
-@app.route("/", methods=["GET"])
+@app.route('/')
 def index():
-    return render_template("form.html")
+    return '✅ RealNex Lead Form API is running.'
 
-@app.route("/submit", methods=["POST"])
-def submit():
+@app.route('/submit-lead', methods=['POST'])
+def submit_lead():
     try:
-        token = request.form["token"]
-        first_name = request.form["first_name"]
-        last_name = request.form["last_name"]
-        email = request.form["email"]
-        phone = request.form.get("phone")
-        investor_type = request.form.get("investor_type")
-        tenant_min = request.form.get("tenant_min")
-        tenant_max = request.form.get("tenant_max")
+        data = request.get_json()
+        print("📥 Incoming data:", data)
 
-        payload = {
-            "first_name": first_name,
-            "last_name": last_name,
-            "email": email,
-            "phone": phone,
-            "custom_fields": {
-                "Investor Type": investor_type,
-                "Tenant Size Min": tenant_min,
-                "Tenant Size Max": tenant_max
+        token = data.get('token')
+        if not token:
+            print("❌ Missing token")
+            return jsonify({'error': 'Missing token'}), 400
+
+        print("🔐 Token received: " + token[:10] + "...")
+
+        # Initialize services
+        contact_service = ContactService(token)
+        company_service = CompanyService(token)
+        history_service = HistoryService(token)
+
+        # Try to find the contact by email
+        contact = contact_service.find_by_email(data['email'])
+        print("🔍 Contact found:", contact)
+
+        # If not found, create a new one
+        if not contact:
+            contact_payload = {
+                'first_name': data.get('first_name'),
+                'last_name': data.get('last_name'),
+                'email': data.get('email'),
+                'phone': data.get('phone')
             }
+
+            # You can use company_service here if needed
+            contact = contact_service.create(contact_payload)
+            print("🆕 Contact created:", contact)
+
+        # Add a history record
+        history_payload = {
+            'contact_id': contact['id'],
+            'event_type': 'Lead Web Form',
+            'notes': data.get('comments', '')
         }
 
-        headers = {"Authorization": f"Bearer {token}"}
-        response = requests.post("https://api.realnex.com/v2/contacts", json=payload, headers=headers)
+        history_service.create(history_payload)
+        print("📘 History added for contact:", contact['id'])
 
-        if response.status_code == 200:
-            return "Contact submitted successfully!"
-        else:
-            return f"Error: {response.text}", 400
+        return jsonify({'status': 'success'}), 200
 
     except Exception as e:
-        return f"Server Error: {str(e)}", 500
-
-if __name__ == "__main__":
-    app.run(debug=True)
+        print("🔥 Exception:", str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
