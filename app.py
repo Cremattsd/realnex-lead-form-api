@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask-cors import CORS
 
 from real_nex_sync_api_data_facade.services.crm_contact import ContactService
 from real_nex_sync_api_data_facade.services.crm_company import CompanyService
