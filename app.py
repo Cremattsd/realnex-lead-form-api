@@ -1,47 +1,42 @@
-from flask import Flask, request, jsonify, render_template
-from real_nex_sync_api_data_facade.services.crm_contact import CrmContactService
-from real_nex_sync_api_data_facade.models import CreateContact
+from flask import Flask, request, jsonify
+from realnex_sdk import RealNexSyncApiDataFacade  # Import your SDK
+import os
 
 app = Flask(__name__)
 
-@app.route("/")
-def index():
-    return render_template("form.html")
+# Use your real base URL and RealNex token
+REALNEX_BASE_URL = "https://api.realnex.com"  # Set this to your actual API base URL
+REALNEX_TOKEN = os.environ.get('REALNEX_TOKEN', 'your_realnex_token_here')  # Make sure this is your actual token
 
-@app.route("/submit-lead", methods=["POST"])
+# Initialize the SDK instance
+realnex_sdk = RealNexSyncApiDataFacade(
+    api_key=REALNEX_TOKEN, 
+    base_url=REALNEX_BASE_URL
+)
+
+@app.route('/submit-lead', methods=['POST'])
 def submit_lead():
+    data = request.json
+    token = data.get('token')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    email = data.get('email')
+    phone = data.get('phone')
+    comments = data.get('comments')
+
+    if token != REALNEX_TOKEN:
+        return jsonify({"error": "Invalid token"}), 400
+
     try:
-        # Get JSON data from the request
-        data = request.get_json()
+        # Example API Call: Fetching contact details (Replace with your actual logic)
+        contact_service = realnex_sdk.crm_contact
+        contact = contact_service.get_contact_async(contact_key=first_name)  # Adjust as needed
 
-        # Extract the token from the data
-        token = data.get("token")
-        if not token:
-            return jsonify({"error": "Missing RealNex token"}), 400
+        return jsonify({"message": "Lead submitted successfully!", "contact": contact}), 200
 
-        # Prepare contact details
-        contact = CreateContact(
-            first_name=data.get("first_name"),
-            last_name=data.get("last_name"),
-            email=data.get("email"),
-            phone=data.get("phone"),
-            comments=data.get("comments")
-        )
-
-        # Initialize the CrmContactService with the base URL
-        contact_service = CrmContactService(base_url="https://api.realnex.com/")
-        
-        # Manually set the Authorization header with the Bearer token
-        contact_service.set_headers({"Authorization": f"Bearer {token}"})
-
-        # Create the contact by calling the post_contact_async method
-        response = contact_service.post_contact_async(request_body=contact)
-
-        # Return the success message with the contact key
-        return jsonify({"success": True, "contact_key": response.key})
     except Exception as e:
-        # Handle any errors that occur
         return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     app.run(debug=True)
