@@ -1,49 +1,33 @@
-from flask import Flask, request, jsonify
-from real_nex_sync_api_data_facade.services.crm_contact import ContactCRM
-from real_nex_sync_api_data_facade.services.crm_company import CompanyCRM
-from real_nex_sync_api_data_facade.services.crm_history import HistoryCRM
+from flask import Flask, request, jsonify, render_template
+from real_nex_sync_api_data_facade import RealNexClient
+from real_nex_sync_api_data_facade.services.crm_contact import CrmContactService
+from realnex_form_helpers import build_contact_payload
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder="templates")
 
-@app.route('/')
-def home():
-    return 'RealNex Lead Form API is running.'
+@app.route("/")
+def index():
+    return render_template("index.html")
 
-@app.route('/submit-lead', methods=['POST'])
-def submit_lead():
+@app.route("/create_contact", methods=["POST"])
+def create_contact():
+    data = request.json
+    token = data.get("token")
+
+    if not token:
+        return jsonify({"error": "Missing RealNex token."}), 400
+
     try:
-        data = request.get_json()
-        token = data.get('token')
-        if not token:
-            return jsonify({'error': 'Missing token'}), 400
+        client = RealNexClient(company_id=token)
+        contact_service = CrmContactService(client)
 
-        # Initialize SDK service classes
-        contact_service = ContactCRM(token)
-        company_service = CompanyCRM(token)
-        history_service = HistoryCRM(token)
-
-        # Try to find existing contact
-        contact = contact_service.find_by_email(data['email'])
-
-        # If not found, create contact
-        if not contact:
-            contact_payload = {
-                'first_name': data.get('first_name', ''),
-                'last_name': data.get('last_name', ''),
-                'email': data.get('email', ''),
-                'phone': data.get('phone', '')
-            }
-            contact = contact_service.create(contact_payload)
-
-        # Add a history entry
-        history_payload = {
-            'contact_id': contact['id'],
-            'event_type': 'Lead Web Form',
-            'notes': data.get('comments', '')
-        }
-        history_service.create(history_payload)
-
-        return jsonify({'status': 'success'}), 200
+        payload = build_contact_payload(data)
+        response = contact_service.post_contact_async(request_body=payload)
+        return jsonify({"message": "Contact created.", "contact_key": response.contact_key})
 
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(debug=True)
