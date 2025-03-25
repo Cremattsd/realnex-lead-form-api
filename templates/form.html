@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Submit a Test Lead</title>
+</head>
+<body>
+  <h1>Submit a Test Lead</h1>
+  <form id="leadForm">
+    <input type="text" name="token" placeholder="Token" required /><br/>
+    <input type="text" name="first_name" placeholder="First Name" required /><br/>
+    <input type="text" name="last_name" placeholder="Last Name" required /><br/>
+    <input type="email" name="email" placeholder="Email" required /><br/>
+    <input type="text" name="phone" placeholder="Phone" required /><br/>
+    <textarea name="comments" placeholder="Comments"></textarea><br/>
+    <button type="submit">Submit</button>
+  </form>
+
+  <p id="result"></p>
+
+  <script>
+    const form = document.getElementById('leadForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+      const res = await fetch('/submit-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      document.getElementById('result').innerText = JSON.stringify(json);
+    });
+  </script>
+</body>
+</html>
