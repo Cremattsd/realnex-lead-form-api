@@ -1,63 +1,48 @@
 import os
-import pip
 from flask import Flask, request, jsonify
-from realnex_sdk import RealNexSyncApiDataFacade  # Import the SDK for RealNex integration
+from flask_cors import CORS
+from real_nex_sync_api_data_facade.sdk import RealNexSyncApiDataFacade  # Adjusted import
 
-# Check installed packages
-installed_packages = pip.get_installed_distributions()
-print("Installed packages:")
-for package in installed_packages:
-    print(package)
-
+# Create Flask app
 app = Flask(__name__)
+CORS(app)  # Enable Cross-Origin Resource Sharing for the app
 
-# RealNex Base URL
-REALNEX_BASE_URL = os.getenv('REALNEX_BASE_URL', 'https://api.realnex.com/')
-
-# Set your API token here
-REALNEX_TOKEN = os.getenv('REALNEX_TOKEN', '')
-
-# Initialize the RealNexSyncApiDataFacade with the base URL and token
-realnex_client = RealNexSyncApiDataFacade(base_url=REALNEX_BASE_URL, token=REALNEX_TOKEN)
-
+# Initialize the RealNex API client
+REALNEX_BASE_URL = 'https://api.realnex.com'  # Replace with the correct base URL
+REALNEX_TOKEN = os.getenv('REALNEX_TOKEN')  # Get the RealNex token from environment variables
+contact_service = RealNexSyncApiDataFacade(base_url=REALNEX_BASE_URL, token=REALNEX_TOKEN)
 
 @app.route('/')
-def home():
-    return "RealNex Lead Form API"
-
+def index():
+    return "RealNex Lead Form API is running!"
 
 @app.route('/submit-lead', methods=['POST'])
 def submit_lead():
+    # Get the data from the incoming form submission
+    lead_data = request.json
+    token = lead_data.get('token')
+
+    if token != REALNEX_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    first_name = lead_data.get('first_name')
+    last_name = lead_data.get('last_name')
+    email = lead_data.get('email')
+    phone = lead_data.get('phone')
+    comments = lead_data.get('comments')
+
+    # Create contact in RealNex CRM using the provided data
     try:
-        # Get lead data from the request
-        data = request.json
-
-        # Extract data from the request
-        token = data.get('token', '')
-        first_name = data.get('first_name', '')
-        last_name = data.get('last_name', '')
-        email = data.get('email', '')
-        phone = data.get('phone', '')
-        comments = data.get('comments', '')
-
-        # You can implement logic to process this data (e.g., save to database or send to RealNex API)
-        
-        # Example: Create a new contact in RealNex CRM (modify this as per your requirements)
-        contact_data = {
+        contact_service.create_contact({
             'first_name': first_name,
             'last_name': last_name,
             'email': email,
             'phone': phone,
             'comments': comments
-        }
-
-        # Create the contact in RealNex using the SDK
-        realnex_client.create_contact(contact_data)
-
+        })
         return jsonify({"message": "Lead submitted successfully!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
