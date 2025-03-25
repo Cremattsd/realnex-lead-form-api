@@ -4,50 +4,36 @@ from real_nex_sync_api_data_facade.models import CreateContact
 
 app = Flask(__name__)
 
-REALNEX_BASE_URL = "https://api.realnex.com"
-
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('form.html')
+    return render_template("form.html")
 
-@app.route('/submit-lead', methods=['POST'])
+@app.route("/submit-lead", methods=["POST"])
 def submit_lead():
     try:
         data = request.get_json()
 
-        token = data.get('token')
-        first_name = data.get('first_name')
-        last_name = data.get('last_name')
-        email = data.get('email')
-        phone = data.get('phone')
-        comments = data.get('comments')
-
+        token = data.get("token")
         if not token:
             return jsonify({"error": "Missing RealNex token"}), 400
 
-        # Initialize service and set token separately
-        contact_service = CrmContactService(base_url=REALNEX_BASE_URL)
-        contact_service.set_token(token)
-
-        contact_data = CreateContact(
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            phone=phone,
-            notes=comments
+        contact = CreateContact(
+            first_name=data.get("first_name"),
+            last_name=data.get("last_name"),
+            email=data.get("email"),
+            phone=data.get("phone"),
+            comments=data.get("comments")
         )
 
-        created_contact = contact_service.post_contact_async(request_body=contact_data)
+        contact_service = CrmContactService(
+            base_url="https://api.realnex.com/",
+            token=token
+        )
 
-        return jsonify({
-            "status": "success",
-            "contact_key": getattr(created_contact, 'key', None),
-            "name": f"{first_name} {last_name}"
-        }), 200
-
+        response = contact_service.post_contact_async(request_body=contact)
+        return jsonify({"success": True, "contact_key": response.key})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
