@@ -25,13 +25,9 @@ def submit_lead():
         if not token:
             return jsonify({"error": "Missing RealNex token"}), 400
 
-        contact_service = CrmContactService(
-            base_url=REALNEX_BASE_URL,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
-            }
-        )
+        # Initialize service and set token separately
+        contact_service = CrmContactService(base_url=REALNEX_BASE_URL)
+        contact_service.set_token(token)
 
         contact_data = CreateContact(
             first_name=first_name,
