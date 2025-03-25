@@ -1,48 +1,72 @@
-import os
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from real_nex_sync_api_data_facade.sdk import RealNexSyncApiDataFacade  # Adjusted import
+from flask import Flask, jsonify, request
+from real_nex_sync_api_data_facade import RealNexSyncApiDataFacade
 
-# Create Flask app
 app = Flask(__name__)
-CORS(app)  # Enable Cross-Origin Resource Sharing for the app
 
-# Initialize the RealNex API client
-REALNEX_BASE_URL = 'https://api.realnex.com'  # Replace with the correct base URL
-REALNEX_TOKEN = os.getenv('REALNEX_TOKEN')  # Get the RealNex token from environment variables
-contact_service = RealNexSyncApiDataFacade(base_url=REALNEX_BASE_URL, token=REALNEX_TOKEN)
+# Replace these with your actual API URL and Token
+API_URL = "YOUR_API_URL"  # Example: "https://api.realnex.com"
+API_TOKEN = "YOUR_API_TOKEN"  # Replace with your RealNex API token
 
-@app.route('/')
-def index():
-    return "RealNex Lead Form API is running!"
+# Initialize RealNex SDK client
+api_client = RealNexSyncApiDataFacade(API_URL, API_TOKEN)
 
-@app.route('/submit-lead', methods=['POST'])
-def submit_lead():
-    # Get the data from the incoming form submission
-    lead_data = request.json
-    token = lead_data.get('token')
-
-    if token != REALNEX_TOKEN:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    first_name = lead_data.get('first_name')
-    last_name = lead_data.get('last_name')
-    email = lead_data.get('email')
-    phone = lead_data.get('phone')
-    comments = lead_data.get('comments')
-
-    # Create contact in RealNex CRM using the provided data
+@app.route('/get_contacts', methods=['GET'])
+def get_contacts():
     try:
-        contact_service.create_contact({
-            'first_name': first_name,
-            'last_name': last_name,
-            'email': email,
-            'phone': phone,
-            'comments': comments
-        })
-        return jsonify({"message": "Lead submitted successfully!"}), 200
+        # Using crm_contact to fetch all contacts
+        contacts = api_client.crm_contact.get_all()  # This method needs to exist in your SDK
+        return jsonify(contacts), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/create_contact', methods=['POST'])
+def create_contact():
+    data = request.get_json()
+
+    try:
+        # Assuming your API expects name and email
+        contact_data = {
+            "first_name": data.get("first_name"),
+            "last_name": data.get("last_name"),
+            "email": data.get("email")
+        }
+
+        # Using crm_contact to create a new contact
+        created_contact = api_client.crm_contact.create(contact_data)  # This method needs to exist
+        return jsonify(created_contact), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/update_contact', methods=['PUT'])
+def update_contact():
+    data = request.get_json()
+
+    try:
+        contact_id = data.get("contact_id")
+        updated_data = {
+            "first_name": data.get("first_name"),
+            "last_name": data.get("last_name"),
+            "email": data.get("email")
+        }
+
+        # Using crm_contact to update a contact
+        updated_contact = api_client.crm_contact.update(contact_id, updated_data)  # This method needs to exist
+        return jsonify(updated_contact), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/delete_contact', methods=['DELETE'])
+def delete_contact():
+    data = request.get_json()
+
+    try:
+        contact_id = data.get("contact_id")
+
+        # Using crm_contact to delete a contact
+        api_client.crm_contact.delete(contact_id)  # This method needs to exist
+        return jsonify({"message": "Contact deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
