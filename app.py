@@ -1,10 +1,8 @@
 from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
 from real_nex_sync_api_data_facade.services.crm_contact import CrmContactService
 from real_nex_sync_api_data_facade.models import CreateContact
 
 app = Flask(__name__)
-CORS(app)
 
 REALNEX_BASE_URL = "https://api.realnex.com"
 
@@ -12,36 +10,47 @@ REALNEX_BASE_URL = "https://api.realnex.com"
 def index():
     return render_template('form.html')
 
-
 @app.route('/submit-lead', methods=['POST'])
 def submit_lead():
-    data = request.get_json()
-    
-    if not data or 'token' not in data:
-        return jsonify({'error': 'Missing API token'}), 400
-
-    token = data['token']
-
     try:
-        # Initialize service and set token
-        contact_service = CrmContactService(base_url=REALNEX_BASE_URL)
-        contact_service.set_token(token)
+        data = request.get_json()
 
-        # Map incoming data to CreateContact model
-        contact = CreateContact(
-            first_name=data.get('first_name'),
-            last_name=data.get('last_name'),
-            email=data.get('email'),
-            phone=data.get('phone'),
-            notes=data.get('comments', '')
+        token = data.get('token')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        email = data.get('email')
+        phone = data.get('phone')
+        comments = data.get('comments')
+
+        if not token:
+            return jsonify({"error": "Missing RealNex token"}), 400
+
+        contact_service = CrmContactService(
+            base_url=REALNEX_BASE_URL,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
         )
 
-        # Create contact in RealNex
-        result = contact_service.post_contact_async(contact)
-        return jsonify({'status': 'success', 'contact_key': result.key})
+        contact_data = CreateContact(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone=phone,
+            notes=comments
+        )
+
+        created_contact = contact_service.post_contact_async(request_body=contact_data)
+
+        return jsonify({
+            "status": "success",
+            "contact_key": getattr(created_contact, 'key', None),
+            "name": f"{first_name} {last_name}"
+        }), 200
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
