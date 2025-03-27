@@ -3,5 +3,5 @@
 echo "Installing Flask & Gunicorn..."
 pip install Flask gunicorn flask-cors
 
-echo "Installing RealNex SDK from GitHub..."
-pip install "git+https://${GITHUB_TOKEN}@github.com/Cremattsd/realnex-sdk.git@main#egg=real_nex_sync_api_data_facade&subdirectory=src/real_nex_sync_api_data_facade"
+echo "Installing SDK from PyPI/Zip via requirements.txt"
+pip install -r requirements.txt
