@@ -3,5 +3,5 @@ gunicorn==23.0.0
 flask-cors==5.0.1
 requests==2.32.3
 
-# RealNex SDK Wheel from GitHub Release
+# RealNex SDK
 https://github.com/Cremattsd/realnex-sdk/releases/download/v1.0.0/real_nex_sync_api_data_facade-1.0.0-py3-none-any.whl
