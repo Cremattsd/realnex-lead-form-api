@@ -1,10 +1,9 @@
-from flask import Flask, render_template
+from flask import render_template, request
 
-app = Flask(__name__)
+@app.route("/lead-form")
+def lead_form():
+    token = request.args.get("token")
+    if not token:
+        return "Missing token", 400
 
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    return render_template("lead_form.html", token=token)
