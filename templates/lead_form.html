@@ -1,27 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Contact Us</title>
-    <style>
-        body { font-family: Arial; padding: 20px; }
-        input, select, textarea {
-            display: block; width: 100%; margin: 10px 0; padding: 10px;
-        }
-        button {
-            background: #0066cc; color: white; padding: 10px 20px;
-            border: none; border-radius: 5px;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body>
-    <h2>Contact Us</h2>
-    <form method="POST" action="/submit-lead">
-        <input type="hidden" name="token" value="{{ token }}">
-        <input type="text" name="first_name" placeholder="First Name" required />
-        <input type="text" name="last_name" placeholder="Last Name" required />
-        <input type="email" name="email" placeholder="Email Address" required />
-        <textarea name="message" placeholder="Your Message"></textarea>
-        <button type="submit">Send</button>
+<body style="--primary: {{ color }}">
+    <form method="POST">
+        <h3>Submit a Lead</h3>
+        <input name="first_name" placeholder="First Name" required>
+        <input name="last_name" placeholder="Last Name" required>
+        <input name="email" type="email" placeholder="Email" required>
+        <button type="submit">Submit</button>
     </form>
 </body>
 </html>
