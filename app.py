@@ -34,10 +34,10 @@ def form():
     if request.method == "POST":
         try:
             token = request.form['token']
-            api_client = RealNexSyncApiDataFacade(
-                api_key=token,
-                base_url="https://sync.realnex.com"  # ✅ Correct endpoint
-            )
+
+            # ✅ Correct way to set base URL and Authorization header
+            api_client = RealNexSyncApiDataFacade(base_url="https://sync.realnex.com")
+            api_client.set_api_key(token, api_key_header="Authorization")
 
             new_contact = CreateContact(
                 first_name=request.form['first_name'],
@@ -46,21 +46,7 @@ def form():
             )
 
             response = api_client.crm_contact.post_contact_async(new_contact)
-
-            try:
-                return jsonify({
-                    "status": "success",
-                    "contact": response.dict()  # If supported
-                })
-            except Exception as parse_error:
-                return jsonify({
-                    "status": "partial_success",
-                    "message": "Contact created but response could not be parsed",
-                    "raw_type": str(type(response)),
-                    "raw_dir": dir(response),
-                    "error": str(parse_error)
-                })
-
+            return jsonify({"status": "success", "contact": response.dict()})
         except Exception as e:
             return jsonify({"status": "error", "message": str(e)})
 
