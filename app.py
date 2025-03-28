@@ -1,6 +1,5 @@
 from flask import Flask, request, render_template_string, jsonify
-from real_nex_sync_api_data_facade import RealNexSyncApiDataFacade
-from real_nex_sync_api_data_facade.models import CreateContact
+import requests
 
 app = Flask(__name__)
 
@@ -34,19 +33,29 @@ def form():
     if request.method == "POST":
         try:
             token = request.form['token']
+            contact_data = {
+                "firstName": request.form['first_name'],
+                "lastName": request.form['last_name'],
+                "email": request.form['email']
+            }
 
-            # ✅ Correct way to set base URL and Authorization header
-            api_client = RealNexSyncApiDataFacade(base_url="https://sync.realnex.com")
-            api_client.set_api_key(token, api_key_header="Authorization")
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
 
-            new_contact = CreateContact(
-                first_name=request.form['first_name'],
-                last_name=request.form['last_name'],
-                email=request.form['email']
-            )
+            url = "https://sync.realnex.com/api/v1/Crm/contact"
 
-            response = api_client.crm_contact.post_contact_async(new_contact)
-            return jsonify({"status": "success", "contact": response.dict()})
+            response = requests.post(url, headers=headers, json=contact_data)
+
+            if response.status_code == 200:
+                return jsonify({"status": "success", "contact": response.json()})
+            else:
+                return jsonify({
+                    "status": "error",
+                    "message": f"Error: {response.status_code} - {response.text}"
+                })
+
         except Exception as e:
             return jsonify({"status": "error", "message": str(e)})
 
