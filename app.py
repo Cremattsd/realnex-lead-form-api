@@ -1,9 +1,7 @@
 from flask import Flask, request, render_template_string, jsonify
-from flask_cors import CORS
 import requests
 
 app = Flask(__name__)
-CORS(app)
 
 HTML_FORM = """
 <!DOCTYPE html>
@@ -11,24 +9,23 @@ HTML_FORM = """
 <head>
     <title>RealNex Lead Form</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 2rem; }
-        form { max-width: 600px; margin: auto; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input, textarea, button { width: 100%; padding: 10px; margin: 10px 0; }
-        button { background-color: #007BFF; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
+        body { font-family: Arial; padding: 2rem; background: #f2f2f2; }
+        form { background: white; padding: 2rem; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, textarea, button { width: 100%; margin: 0.5rem 0; padding: 0.75rem; border-radius: 5px; border: 1px solid #ccc; }
+        button { background-color: #007BFF; color: white; border: none; }
     </style>
 </head>
 <body>
     <form method="POST">
         <h2>Submit a Lead</h2>
-        <input type="text" name="token" placeholder="RealNex Token" required />
+        <input type="text" name="token" placeholder="Your RealNex Token" required />
         <input type="text" name="first_name" placeholder="First Name" required />
         <input type="text" name="last_name" placeholder="Last Name" required />
         <input type="email" name="email" placeholder="Email Address" required />
-        <input type="text" name="phone" placeholder="Phone Number" />
-        <input type="text" name="company" placeholder="Company Name (Optional)" />
-        <input type="text" name="address" placeholder="Address (Optional)" />
-        <textarea name="comments" placeholder="Comments or Notes"></textarea>
+        <input type="text" name="phone" placeholder="Phone (optional)" />
+        <input type="text" name="company" placeholder="Company (optional)" />
+        <input type="text" name="address" placeholder="Address (optional)" />
+        <textarea name="comments" placeholder="Comments (will appear in notes)"></textarea>
         <button type="submit">Submit</button>
     </form>
 </body>
@@ -39,69 +36,73 @@ HTML_FORM = """
 def lead_form():
     if request.method == "POST":
         try:
-            token = request.form['token']
+            # Get form data
+            token = request.form["token"]
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json"
             }
 
-            # Step 1: Create Contact
+            first_name = request.form.get("first_name")
+            last_name = request.form.get("last_name")
+            email = request.form.get("email")
+            phone = request.form.get("phone", "")
+            company_name = request.form.get("company", "")
+            address = request.form.get("address", "")
+            comments = request.form.get("comments", "")
+
+            # STEP 1: Create Contact
             contact_payload = {
-                "firstName": request.form['first_name'],
-                "lastName": request.form['last_name'],
-                "email": request.form['email']
+                "firstName": first_name,
+                "lastName": last_name,
+                "email": email,
+                "phones": [{"number": phone, "type": "Mobile"}] if phone else [],
+                "addresses": [{"address1": address}] if address else []
             }
 
-            phone = request.form.get("phone")
-            if phone:
-                contact_payload["phones"] = [{"number": phone, "type": "Mobile", "isPrimary": True}]
-
-            address = request.form.get("address")
-            if address:
-                contact_payload["addresses"] = [{"address1": address}]
-
-            contact_response = requests.post(
+            contact_res = requests.post(
                 "https://sync.realnex.com/api/v1/Crm/contact",
                 headers=headers,
                 json=contact_payload
             )
-            contact_data = contact_response.json()
-            contact_key = contact_data.get("contact", {}).get("key")
+            contact_data = contact_res.json()
+            contact_key = contact_data.get("contact", {}).get("key") or contact_data.get("key")
 
             if not contact_key:
-                return jsonify({"status": "error", "details": contact_data})
+                return jsonify({"status": "error", "message": "Contact not created", "response": contact_data})
 
-            # Step 2: Create Company (Optional)
-            company_name = request.form.get("company")
+            # STEP 2: Create Company (optional)
             if company_name:
                 company_payload = {"name": company_name}
-                company_response = requests.post(
+                company_res = requests.post(
                     "https://sync.realnex.com/api/v1/Crm/company",
                     headers=headers,
                     json=company_payload
                 )
-                company_data = company_response.json()
-                company_key = company_data.get("company", {}).get("key")
+                company_key = company_res.json().get("key")
 
                 if company_key:
+                    # Link contact to company
+                    link_payload = {"companyKey": company_key}
                     requests.post(
-                        f"https://sync.realnex.com/api/v1/Crm/contact/{contact_key}/company/{company_key}",
-                        headers=headers
+                        f"https://sync.realnex.com/api/v1/Crm/contact/{contact_key}/company",
+                        headers=headers,
+                        json=link_payload
                     )
 
-            # Step 3: Create History Note
-            comments = request.form.get("comments")
-            if comments:
-                history_payload = {
-                    "subject": "Web Lead",
-                    "note": comments,
-                    "contactKeys": [contact_key]
-                }
-                requests.post(
-                    "https://sync.realnex.com/api/v1/Crm/history",
-                    headers=headers,
-                    json=history_payload
-                )
+            # STEP 3: Create History Record
+            history_payload = {
+                "subject": "Weblead",
+                "notes": comments,
+                "eventType": "Note",
+                "linkedContacts": [contact_key]
+            }
+
+            requests.post(
+                "https://sync.realnex.com/api/v1/Crm/history",
+                headers=headers,
+                json=history_payload
+            )
 
             return jsonify({"status": "success", "contact_key": contact_key})
 
