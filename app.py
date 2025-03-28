@@ -1,71 +1,53 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask import Flask, request, render_template_string, jsonify
 from real_nex_sync_api_data_facade import RealNexSyncApiDataFacade
 from real_nex_sync_api_data_facade.models import CreateContact
 
 app = Flask(__name__)
-CORS(app)
 
-# Replace these with your actual API URL and Token
-API_URL = "https://api.realnex.com"  # Example endpoint
-API_TOKEN = "YOUR_API_TOKEN"  # Securely injected per user in final version
+HTML_FORM = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test RealNex Lead Form</title>
+    <style>
+        body { font-family: Arial; padding: 2rem; background: #f9f9f9; }
+        form { max-width: 400px; margin: auto; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 0.75rem; margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 5px; }
+        button { background-color: #007BFF; color: white; border: none; }
+    </style>
+</head>
+<body>
+    <form method="POST">
+        <h2>Submit a Lead</h2>
+        <input type="text" name="token" placeholder="Your RealNex Token" required />
+        <input type="text" name="first_name" placeholder="First Name" required />
+        <input type="text" name="last_name" placeholder="Last Name" required />
+        <input type="email" name="email" placeholder="Email Address" required />
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
+"""
 
-# Initialize RealNex SDK client
-api_client = RealNexSyncApiDataFacade(API_URL, API_TOKEN)
+@app.route("/", methods=["GET", "POST"])
+def form():
+    if request.method == "POST":
+        try:
+            token = request.form['token']
+            api_client = RealNexSyncApiDataFacade("https://api.realnex.com", token)
 
-@app.route("/", methods=["GET"])
-def index():
-    return jsonify({"message": "RealNex Lead Form API is running!"})
+            new_contact = CreateContact(
+                first_name=request.form['first_name'],
+                last_name=request.form['last_name'],
+                email=request.form['email']
+            )
 
-@app.route('/get_contacts', methods=['GET'])
-def get_contacts():
-    try:
-        contacts = api_client.crm_contact.get_all()
-        return jsonify(contacts), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            response = api_client.crm_contact.post_contact_async(new_contact)
+            return jsonify({"status": "success", "contact": response.dict()})
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)})
 
-@app.route('/create_contact', methods=['POST'])
-def create_contact():
-    data = request.get_json()
-
-    try:
-        contact = CreateContact(
-            first_name=data.get("first_name"),
-            last_name=data.get("last_name"),
-            email=data.get("email")
-        )
-        created_contact = api_client.crm_contact.post_contact_async(contact)
-        return jsonify(created_contact), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/update_contact', methods=['PUT'])
-def update_contact():
-    data = request.get_json()
-
-    try:
-        contact_id = data.get("contact_id")
-        updated_data = {
-            "first_name": data.get("first_name"),
-            "last_name": data.get("last_name"),
-            "email": data.get("email")
-        }
-        updated_contact = api_client.crm_contact.update(contact_id, updated_data)
-        return jsonify(updated_contact), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/delete_contact', methods=['DELETE'])
-def delete_contact():
-    data = request.get_json()
-
-    try:
-        contact_id = data.get("contact_id")
-        api_client.crm_contact.delete_contact_async(contact_id)
-        return jsonify({"message": "Contact deleted successfully"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return render_template_string(HTML_FORM)
 
 if __name__ == "__main__":
     app.run(debug=True)
