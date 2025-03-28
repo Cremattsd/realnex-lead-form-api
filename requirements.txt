@@ -4,4 +4,5 @@ requests==2.32.3
 flask-cors==5.0.1
 
 # Pull RealNex SDK wheel from GitHub Release
-https://github.com/Cremattsd/realnex-sdk/releases/download/v1.0.1/real_nex_sync_api_data_facade-1.0.0-py3-none-any.whl
+https://github.com/Cremattsd/realnex-sdk/releases/download/v1.0.1/realnex-sdk-v1.0.0.zip
+
