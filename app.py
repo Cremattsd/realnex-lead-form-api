@@ -34,12 +34,9 @@ def form():
     if request.method == "POST":
         try:
             token = request.form['token']
-
-            # 🔧 If RealNex expects "Authorization: Bearer {token}", try this:
             api_client = RealNexSyncApiDataFacade(
-                api_key=f"Bearer {token}",
-                api_key_header="Authorization",  # RealNex might use this header
-                base_url="https://sync.realnex.com"
+                api_key=token,
+                base_url="https://sync.realnex.com"  # ✅ Correct endpoint
             )
 
             new_contact = CreateContact(
@@ -49,7 +46,21 @@ def form():
             )
 
             response = api_client.crm_contact.post_contact_async(new_contact)
-            return jsonify({"status": "success", "contact": response.dict()})
+
+            try:
+                return jsonify({
+                    "status": "success",
+                    "contact": response.dict()  # If supported
+                })
+            except Exception as parse_error:
+                return jsonify({
+                    "status": "partial_success",
+                    "message": "Contact created but response could not be parsed",
+                    "raw_type": str(type(response)),
+                    "raw_dir": dir(response),
+                    "error": str(parse_error)
+                })
+
         except Exception as e:
             return jsonify({"status": "error", "message": str(e)})
 
