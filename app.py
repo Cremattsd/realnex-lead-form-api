@@ -34,7 +34,8 @@ def form():
     if request.method == "POST":
         try:
             token = request.form['token']
-            api_client = RealNexSyncApiDataFacade("https://api.realnex.com", token)
+            # ✅ Replace this with the actual working API URL
+            api_client = RealNexSyncApiDataFacade("https://api.realnex.net", token)
 
             new_contact = CreateContact(
                 first_name=request.form['first_name'],
