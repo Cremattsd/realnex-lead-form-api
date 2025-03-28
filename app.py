@@ -35,8 +35,11 @@ def form():
         try:
             token = request.form['token']
 
-            # ✅ ✅ ✅ REAL RealNex API URL below
-            api_client = RealNexSyncApiDataFacade("https://api.realnex.net", token)
+            # ✅ Correct way to pass token and base URL
+            api_client = RealNexSyncApiDataFacade(
+                api_key=token,
+                base_url="https://sync.realnex.com"
+            )
 
             new_contact = CreateContact(
                 first_name=request.form['first_name'],
