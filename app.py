@@ -23,6 +23,7 @@ HTML_FORM = """
         <input type="text" name="first_name" placeholder="First Name" required />
         <input type="text" name="last_name" placeholder="Last Name" required />
         <input type="email" name="email" placeholder="Email" required />
+        <input type="text" name="phone" placeholder="Phone (optional)" />
         <input type="text" name="company" placeholder="Company (optional)" />
         <input type="text" name="address" placeholder="Address (optional)" />
         <textarea name="notes" placeholder="Additional Notes (optional)"></textarea>
@@ -42,18 +43,18 @@ def lead_form():
                 "Content-Type": "application/json"
             }
 
-            # Build contact payload
             contact_payload = {
                 "firstName": request.form["first_name"],
                 "lastName": request.form["last_name"],
                 "email": request.form["email"]
             }
 
-            # Add address if provided
+            if request.form.get("phone"):
+                contact_payload["phone"] = request.form["phone"]
+
             if request.form.get("address"):
                 contact_payload["addresses"] = [{"address1": request.form["address"]}]
 
-            # Add company if provided
             company_key = None
             if request.form.get("company"):
                 company_resp = requests.post(
@@ -65,7 +66,6 @@ def lead_form():
                     company_key = company_resp.json()["key"]
                     contact_payload["companyKey"] = company_key
 
-            # Create contact
             contact_resp = requests.post(
                 "https://sync.realnex.com/api/v1/Crm/contact",
                 headers=headers,
@@ -73,7 +73,6 @@ def lead_form():
             )
             contact_data = contact_resp.json()
 
-            # Determine where the contact key is
             if "contact" in contact_data:
                 contact_key = contact_data["contact"]["key"]
             elif "details" in contact_data and "key" in contact_data["details"]:
@@ -81,9 +80,9 @@ def lead_form():
             else:
                 return jsonify({"status": "error", "message": "Contact not created.", "details": contact_data})
 
-            # Add history record
             history_payload = {
-                "description": request.form.get("notes", "Lead submitted via web form."),
+                "description": request.form.get("notes", "Web Lead form submitted."),
+                "subject": "Weblead",
                 "eventType": "Weblead",
                 "contactKeys": [contact_key]
             }
