@@ -35,9 +35,10 @@ def form():
         try:
             token = request.form['token']
 
-            # ✅ Correct way to pass token and base URL
+            # 🔧 If RealNex expects "Authorization: Bearer {token}", try this:
             api_client = RealNexSyncApiDataFacade(
-                api_key=token,
+                api_key=f"Bearer {token}",
+                api_key_header="Authorization",  # RealNex might use this header
                 base_url="https://sync.realnex.com"
             )
 
