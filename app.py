@@ -41,7 +41,6 @@ def lead_form():
             "Content-Type": "application/json"
         }
 
-        # Gather form data
         first = request.form.get("first_name")
         last = request.form.get("last_name")
         email = request.form.get("email")
@@ -51,13 +50,15 @@ def lead_form():
         comments = request.form.get("comments")
 
         try:
-            # 1. Check for duplicate contact
+            # Step 1: Check if contact already exists
             search_resp = requests.get(
                 f"https://sync.realnex.com/api/v1/Crm/contacts?email={email}",
                 headers=headers
             )
-            contact_data = search_resp.json()
+            if search_resp.status_code != 200:
+                return jsonify({"status": "error", "message": f"Contact search failed: {search_resp.text}"})
 
+            contact_data = search_resp.json() if search_resp.text else {}
             existing_contact = None
             for c in contact_data.get("items", []):
                 if c["firstName"].lower() == first.lower() and c["lastName"].lower() == last.lower():
@@ -67,30 +68,30 @@ def lead_form():
             if existing_contact:
                 contact_key = existing_contact["key"]
             else:
-                # 2. Create contact
                 contact_payload = {
                     "firstName": first,
                     "lastName": last,
                     "email": email,
-                    "phone": phone
+                    "phone1": phone
                 }
                 contact_resp = requests.post(
                     "https://sync.realnex.com/api/v1/Crm/contact",
                     headers=headers,
                     json=contact_payload
                 )
-                contact = contact_resp.json()
+                if contact_resp.status_code != 200:
+                    return jsonify({"status": "error", "message": f"Contact creation failed: {contact_resp.text}"})
+                contact = contact_resp.json() if contact_resp.text else {}
                 contact_key = contact.get("contact", {}).get("key")
 
-            # 3. Add company if provided
+            # Step 2: Check if company exists or create it
             company_key = None
             if company:
                 company_search = requests.get(
                     f"https://sync.realnex.com/api/v1/Crm/companies?name={company}",
                     headers=headers
                 )
-                companies = company_search.json().get("items", [])
-
+                companies = company_search.json().get("items", []) if company_search.text else []
                 if companies:
                     company_key = companies[0]["key"]
                 else:
@@ -100,10 +101,10 @@ def lead_form():
                         headers=headers,
                         json=company_payload
                     )
-                    comp_data = comp_resp.json()
+                    comp_data = comp_resp.json() if comp_resp.text else {}
                     company_key = comp_data.get("company", {}).get("key")
 
-            # 4. Create history record
+            # Step 3: Add a history record
             history_payload = {
                 "subject": "Weblead",
                 "notes": comments or "Submitted via web form.",
@@ -117,7 +118,14 @@ def lead_form():
                 json=history_payload
             )
 
-            return jsonify({"status": "success", "contact_key": contact_key, "company_key": company_key})
+            if history_resp.status_code != 200:
+                return jsonify({"status": "error", "message": f"History creation failed: {history_resp.text}"})
+
+            return jsonify({
+                "status": "success",
+                "contact_key": contact_key,
+                "company_key": company_key
+            })
 
         except Exception as e:
             return jsonify({"status": "error", "message": str(e)})
