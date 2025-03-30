@@ -50,7 +50,7 @@ def lead_form():
         comments = request.form.get("comments")
 
         try:
-            # Step 1: Check if contact already exists
+            # Search for existing contact
             search_resp = requests.get(
                 f"https://sync.realnex.com/api/v1/Crm/contacts?email={email}",
                 headers=headers
@@ -58,12 +58,8 @@ def lead_form():
             if search_resp.status_code != 200:
                 return jsonify({"status": "error", "message": f"Contact search failed: {search_resp.text}"})
 
-            contact_data = search_resp.json() if search_resp.text else {}
-            existing_contact = None
-            for c in contact_data.get("items", []):
-                if c["firstName"].lower() == first.lower() and c["lastName"].lower() == last.lower():
-                    existing_contact = c
-                    break
+            contact_data = search_resp.json()
+            existing_contact = next((c for c in contact_data.get("items", []) if c["firstName"].lower() == first.lower() and c["lastName"].lower() == last.lower()), None)
 
             if existing_contact:
                 contact_key = existing_contact["key"]
@@ -72,39 +68,27 @@ def lead_form():
                     "firstName": first,
                     "lastName": last,
                     "email": email,
-                    "phone1": phone
+                    "phones": [{"number": phone, "isPrimary": True}] if phone else []
                 }
-                contact_resp = requests.post(
-                    "https://sync.realnex.com/api/v1/Crm/contact",
-                    headers=headers,
-                    json=contact_payload
-                )
+                contact_resp = requests.post("https://sync.realnex.com/api/v1/Crm/contact", headers=headers, json=contact_payload)
                 if contact_resp.status_code != 200:
                     return jsonify({"status": "error", "message": f"Contact creation failed: {contact_resp.text}"})
-                contact = contact_resp.json() if contact_resp.text else {}
+                contact = contact_resp.json()
                 contact_key = contact.get("contact", {}).get("key")
 
-            # Step 2: Check if company exists or create it
             company_key = None
             if company:
-                company_search = requests.get(
-                    f"https://sync.realnex.com/api/v1/Crm/companies?name={company}",
-                    headers=headers
-                )
-                companies = company_search.json().get("items", []) if company_search.text else []
-                if companies:
-                    company_key = companies[0]["key"]
-                else:
-                    company_payload = {"name": company, "address1": address}
-                    comp_resp = requests.post(
-                        "https://sync.realnex.com/api/v1/Crm/company",
-                        headers=headers,
-                        json=company_payload
-                    )
-                    comp_data = comp_resp.json() if comp_resp.text else {}
-                    company_key = comp_data.get("company", {}).get("key")
+                company_search = requests.get(f"https://sync.realnex.com/api/v1/Crm/companies?name={company}", headers=headers)
+                if company_search.status_code == 200:
+                    companies = company_search.json().get("items", [])
+                    if companies:
+                        company_key = companies[0]["key"]
+                    else:
+                        company_payload = {"name": company, "address1": address}
+                        comp_resp = requests.post("https://sync.realnex.com/api/v1/Crm/company", headers=headers, json=company_payload)
+                        if comp_resp.status_code == 200:
+                            company_key = comp_resp.json().get("company", {}).get("key")
 
-            # Step 3: Add a history record
             history_payload = {
                 "subject": "Weblead",
                 "notes": comments or "Submitted via web form.",
@@ -112,20 +96,11 @@ def lead_form():
                 "linkedCompanyKeys": [company_key] if company_key else [],
                 "eventType": "Note"
             }
-            history_resp = requests.post(
-                "https://sync.realnex.com/api/v1/Crm/history",
-                headers=headers,
-                json=history_payload
-            )
-
+            history_resp = requests.post("https://sync.realnex.com/api/v1/Crm/history", headers=headers, json=history_payload)
             if history_resp.status_code != 200:
                 return jsonify({"status": "error", "message": f"History creation failed: {history_resp.text}"})
 
-            return jsonify({
-                "status": "success",
-                "contact_key": contact_key,
-                "company_key": company_key
-            })
+            return jsonify({"status": "success", "contact_key": contact_key, "company_key": company_key})
 
         except Exception as e:
             return jsonify({"status": "error", "message": str(e)})
