@@ -37,7 +37,11 @@ def admin_token_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
+
+@app.route("/lead-form", methods=["GET", "POST"])
 @admin_token_required
 def lead_form():
     admin_token = bool(DEFAULT_API_TOKEN)
@@ -187,5 +191,9 @@ def lead_success():
         return redirect(url_for('lead_form'))
     return render_template("success.html", **lead_data)
 
+@app.route("/generate-snippet")
+def snippet_generator():
+    return render_template("snippet.html")
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=os.getenv("FLASK_DEBUG", "False").lower() == "true")
+    app.run(debug=os.getenv("FLASK_DEBUG", "False").lower() == "true")
