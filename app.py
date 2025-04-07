@@ -37,11 +37,7 @@ def admin_token_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@app.route("/", methods=["GET"])
-def index():
-    return render_template("index.html")
-
-@app.route("/lead-form", methods=["GET", "POST"])
+@app.route("/", methods=["GET", "POST"])
 @admin_token_required
 def lead_form():
     admin_token = bool(DEFAULT_API_TOKEN)
@@ -96,7 +92,7 @@ def lead_form():
         if errors:
             for error in errors:
                 flash(error, "error")
-            return render_template("form.html", messages=session.get('_flashes', []), **form_data)
+            return render_template("form.html", messages=session.get('_flashes', []), token=form_data["token"], admin_token=admin_token, **form_data)
 
         # Verify reCAPTCHA
         recaptcha_verify = requests.post(
@@ -106,7 +102,7 @@ def lead_form():
         recaptcha_result = recaptcha_verify.json()
         if not recaptcha_result.get("success"):
             flash("reCAPTCHA failed. Please try again.", "error")
-            return render_template("form.html", messages=session.get('_flashes', []), **form_data)
+            return render_template("form.html", messages=session.get('_flashes', []), token=form_data["token"], admin_token=admin_token, **form_data)
 
         headers = {
             "Authorization": f"Bearer {token}",
@@ -179,9 +175,9 @@ def lead_form():
 
         except Exception as e:
             flash(f"Error: {str(e)}", "error")
-            return render_template("form.html", messages=session.get('_flashes', []), **form_data)
+            return render_template("form.html", messages=session.get('_flashes', []), token=form_data["token"], admin_token=admin_token, **form_data)
 
-    return render_template("form.html", messages=session.get('_flashes', []), **form_data)
+    return render_template("form.html", messages=session.get('_flashes', []), token=form_data["token"], admin_token=admin_token, **form_data)
 
 @app.route("/success")
 def lead_success():
@@ -191,9 +187,10 @@ def lead_success():
         return redirect(url_for('lead_form'))
     return render_template("success.html", **lead_data)
 
-@app.route("/generate-snippet")
-def snippet_generator():
-    return render_template("snippet.html")
+@app.route("/form", methods=["GET"])
+def embedded_form():
+    token = request.args.get("token", "")
+    return render_template("form.html", token=token, admin_token=False, messages=[])
 
 if __name__ == "__main__":
     app.run(debug=os.getenv("FLASK_DEBUG", "False").lower() == "true")
