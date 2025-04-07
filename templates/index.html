@@ -20,6 +20,12 @@
     textarea {
       height: 140px;
     }
+    #success-message {
+      color: green;
+      font-weight: bold;
+      display: none;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -33,9 +39,14 @@
   <h3>📋 Copy this code into your website:</h3>
   <textarea id="snippet" readonly></textarea>
 
+  <button onclick="copyToClipboard()">Copy to Clipboard</button>
+  <div id="success-message">✅ Snippet generated and copied!</div>
+
   <script>
     function generateSnippet() {
       const token = document.getElementById("token").value.trim();
+      const snippetBox = document.getElementById("snippet");
+      const message = document.getElementById("success-message");
 
       if (!token) {
         alert("Please enter your RealNex token.");
@@ -50,8 +61,20 @@
 <!-- End RealNex Lead Form -->
       `.trim();
 
-      document.getElementById("snippet").value = snippet;
+      snippetBox.value = snippet;
+      message.style.display = "block";
     }
+
+    function copyToClipboard() {
+      const snippetBox = document.getElementById("snippet");
+      snippetBox.select();
+      document.execCommand("copy");
+    }
+
+    // Auto-select when clicked
+    document.getElementById("snippet").addEventListener("focus", function () {
+      this.select();
+    });
   </script>
 </body>
 </html>
