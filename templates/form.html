@@ -24,31 +24,49 @@
       padding: 0.75rem;
       border: 1px solid #ccc;
       border-radius: 4px;
+      font-size: 1rem;
     }
     button {
       background-color: #007BFF;
       color: white;
       border: none;
+      font-weight: bold;
+      cursor: pointer;
     }
-    .alert { padding: 10px; margin-bottom: 1rem; border-radius: 4px; }
-    .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .alert {
+      padding: 12px;
+      margin-bottom: 1rem;
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
   </style>
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
 
-  {% for category, message in messages %}
-    <div class="alert alert-{{ category }}">{{ message }}</div>
-  {% endfor %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
   <form method="POST">
     <h2>Submit Lead</h2>
+
     {% if not admin_token %}
-    <input name="token" value="{{ token }}" placeholder="API Token" required />
+      <input name="token" value="{{ token }}" placeholder="API Token" required />
     {% endif %}
+
     <input name="first_name" value="{{ first_name }}" placeholder="First Name" required />
     <input name="last_name" value="{{ last_name }}" placeholder="Last Name" required />
-    <input name="email" value="{{ email }}" placeholder="Email" required type="email" />
+    <input name="email" value="{{ email }}" placeholder="Email" type="email" required />
     <input name="phone" value="{{ phone }}" placeholder="Phone Number" />
     <input name="company" value="{{ company }}" placeholder="Company" />
     <input name="address" value="{{ address }}" placeholder="Address" />
