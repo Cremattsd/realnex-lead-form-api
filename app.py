@@ -9,7 +9,6 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "super-secret")
-
 RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY", "")
 
 def sanitize_input(input_string):
@@ -53,6 +52,7 @@ def lead_form():
             "address": sanitize_input(request.form.get("address")),
             "comments": sanitize_input(request.form.get("comments"))
         })
+
         recaptcha_response = request.form.get("g-recaptcha-response")
         errors = []
 
@@ -105,7 +105,11 @@ def lead_form():
                     },
                     "phones": [{"number": form_data["phone"], "type": "work"}] if form_data["phone"] else []
                 }
-                contact_resp = requests.post("https://sync.realnex.com/api/v1/Crm/contact", headers=headers, json=contact_payload)
+                contact_resp = requests.post(
+                    "https://sync.realnex.com/api/v1/Crm/contact",
+                    headers=headers,
+                    json=contact_payload
+                )
                 contact = contact_resp.json()
                 contact_key = contact.get("contact", {}).get("key")
 
@@ -133,12 +137,21 @@ def lead_form():
             history_payload = {
                 "subject": "Weblead Submission",
                 "notes": form_data["comments"] or "Submitted via web form.",
-                "linkedContactKeys": [contact_key],
-                "linkedCompanyKeys": [company_key] if company_key else [],
-                "eventType": "Note"
+                "eventTypeKey": "Note",
+                "contactKey": contact_key
             }
-            requests.post(
-                "https://sync.realnex.com/api/v1/Crm/history", headers=headers, json=history_payload)
+
+            if company_key:
+                history_payload["companyKey"] = company_key
+
+            history_resp = requests.post(
+                "https://sync.realnex.com/api/v1/Crm/history",
+                headers=headers,
+                json=history_payload
+            )
+
+            if history_resp.status_code != 200:
+                app.logger.warning("Failed to create history record: %s", history_resp.text)
 
             session['lead_data'] = {
                 'first_name': form_data["first_name"],
