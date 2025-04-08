@@ -5,35 +5,34 @@ import re
 from dotenv import load_dotenv
 from functools import wraps
 
-# Load environment variables
 load_dotenv()
-
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+app.secret_key = os.getenv("SECRET_KEY", "your-dev-secret")
 
 RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY", "")
 
-# Helper Functions
-def sanitize_input(input_string):
-    if not input_string:
-        return ""
-    return re.sub(r'[<>"\'&;()]', '', input_string).strip()
-
-def validate_phone(phone):
-    digits_only = re.sub(r'\D', '', phone)
-    return digits_only if 7 <= len(digits_only) <= 15 else None
+# Helpers
+def sanitize_input(val):
+    return re.sub(r'[<>"\'&]', '', val.strip()) if val else ""
 
 def validate_email(email):
-    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-    return bool(re.match(pattern, email))
+    return re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email)
+
+def validate_phone(phone):
+    digits = re.sub(r'\D', '', phone)
+    return digits if 7 <= len(digits) <= 15 else None
+
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 @app.route("/form", methods=["GET", "POST"])
-def lead_form():
-    token = request.args.get("token") or sanitize_input(request.form.get("token"))
-    admin_token = bool(not not token)
-    
+def form():
+    token = request.args.get("token") or request.form.get("token")
+    if not token:
+        flash("Missing RealNex API Token in URL or form.", "error")
+
     form_data = {
-        "token": token,
         "first_name": "",
         "last_name": "",
         "email": "",
@@ -41,14 +40,15 @@ def lead_form():
         "company": "",
         "address": "",
         "comments": "",
-        "admin_token": admin_token
+        "token": token,
+        "admin_token": False
     }
 
     if request.method == "POST":
         first_name = sanitize_input(request.form.get("first_name"))
         last_name = sanitize_input(request.form.get("last_name"))
         email = sanitize_input(request.form.get("email"))
-        phone = validate_phone(sanitize_input(request.form.get("phone")))
+        phone = validate_phone(request.form.get("phone"))
         company = sanitize_input(request.form.get("company"))
         address = sanitize_input(request.form.get("address"))
         comments = sanitize_input(request.form.get("comments"))
@@ -66,31 +66,28 @@ def lead_form():
 
         errors = []
         if not token:
-            errors.append("API Token is required")
+            errors.append("API Token is required.")
         if not first_name:
-            errors.append("First Name is required")
+            errors.append("First name is required.")
         if not last_name:
-            errors.append("Last Name is required")
+            errors.append("Last name is required.")
         if not email or not validate_email(email):
-            errors.append("Please enter a valid email address")
-        if phone is None and request.form.get("phone"):
-            errors.append("Please enter a valid phone number")
+            errors.append("A valid email is required.")
         if not recaptcha_response:
-            errors.append("Please complete the reCAPTCHA")
+            errors.append("Please complete the reCAPTCHA.")
 
         if errors:
             for error in errors:
                 flash(error, "error")
             return render_template("form.html", messages=session.get('_flashes', []), **form_data)
 
-        # Verify reCAPTCHA
-        recaptcha_verify = requests.post(
+        # Validate reCAPTCHA
+        verify_resp = requests.post(
             "https://www.google.com/recaptcha/api/siteverify",
             data={"secret": RECAPTCHA_SECRET_KEY, "response": recaptcha_response}
         )
-        recaptcha_result = recaptcha_verify.json()
-        if not recaptcha_result.get("success"):
-            flash("reCAPTCHA failed. Please try again.", "error")
+        if not verify_resp.json().get("success"):
+            flash("reCAPTCHA validation failed.", "error")
             return render_template("form.html", messages=session.get('_flashes', []), **form_data)
 
         headers = {
@@ -99,59 +96,59 @@ def lead_form():
         }
 
         try:
-            # Create or find contact
-            search_resp = requests.get(f"https://sync.realnex.com/api/v1/Crm/contacts?email={email}", headers=headers)
-            contact_data = search_resp.json()
-            existing_contact = next((c for c in contact_data.get("items", [])
-                                     if c["firstName"].lower() == first_name.lower() and c["lastName"].lower() == last_name.lower()), None)
-            if existing_contact:
-                contact_key = existing_contact["key"]
-            else:
+            # Check for existing contact
+            contact_key = None
+            search = requests.get(f"https://sync.realnex.com/api/v1/Crm/contacts?email={email}", headers=headers)
+            if search.ok and search.json().get("items"):
+                for contact in search.json()["items"]:
+                    if contact["firstName"].lower() == first_name.lower() and contact["lastName"].lower() == last_name.lower():
+                        contact_key = contact["key"]
+                        break
+
+            # Create contact if not found
+            if not contact_key:
                 contact_payload = {
                     "firstName": first_name,
                     "lastName": last_name,
                     "email": email,
                     "phones": [{"number": phone}] if phone else []
                 }
-                contact_resp = requests.post("https://sync.realnex.com/api/v1/Crm/contact", headers=headers, json=contact_payload)
-                contact = contact_resp.json()
-                contact_key = contact.get("contact", {}).get("key")
+                res = requests.post("https://sync.realnex.com/api/v1/Crm/contact", headers=headers, json=contact_payload)
+                contact_key = res.json().get("contact", {}).get("key")
 
-            # Create company if provided
+            # Create company
             company_key = None
             if company:
-                company_payload = {
+                comp_payload = {
                     "name": company,
                     "address_info": {
-                        "address_1": address,
-                        "company": company
+                        "company": company,
+                        "address_1": address
                     }
                 }
-                company_resp = requests.post("https://sync.realnex.com/api/v1/Crm/company", headers=headers, json=company_payload)
-                comp_data = company_resp.json()
-                company_key = comp_data.get("company", {}).get("key")
+                comp_res = requests.post("https://sync.realnex.com/api/v1/Crm/company", headers=headers, json=comp_payload)
+                company_key = comp_res.json().get("company", {}).get("key")
 
-            # Create history for contact
-            history_payload = {
-                "subject": "Weblead",
-                "notes": comments or "Submitted via web form.",
-                "eventTypeKey": 1,
-                "published": True,
-                "timeless": True
+            # Create history
+            if contact_key:
+                history_payload = {
+                    "subject": "Weblead",
+                    "notes": comments or "Submitted via form",
+                    "linkedContactKeys": [contact_key],
+                    "linkedCompanyKeys": [company_key] if company_key else [],
+                    "eventTypeKey": 1  # Use a valid integer event type (like '1' for Note)
+                }
+                hist = requests.post("https://sync.realnex.com/api/v1/Crm/history", headers=headers, json=history_payload)
+                if not hist.ok:
+                    flash(f"Error posting history: {hist.status_code} {hist.text}", "error")
+
+            session["lead_data"] = {
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": email,
+                "company": company
             }
-            history_url = f"https://sync.realnex.com/api/v1/Crm/object/{contact_key}/history"
-            history_resp = requests.post(history_url, headers=headers, json=history_payload)
-
-            if history_resp.status_code >= 400:
-                print("Error posting history:", history_resp.status_code, history_resp.text)
-
-            session['lead_data'] = {
-                'first_name': first_name,
-                'last_name': last_name,
-                'email': email,
-                'company': company
-            }
-            return redirect(url_for('lead_success'))
+            return redirect(url_for("success"))
 
         except Exception as e:
             flash(f"Error submitting to RealNex: {str(e)}", "error")
@@ -160,25 +157,13 @@ def lead_form():
     return render_template("form.html", messages=session.get('_flashes', []), **form_data)
 
 @app.route("/success")
-def lead_success():
-    lead_data = session.pop('lead_data', {})
+def success():
+    lead_data = session.pop("lead_data", {})
     if not lead_data:
-        flash("No lead submission found", "error")
-        return redirect(url_for('lead_form'))
+        flash("No submission found.", "error")
+        return redirect(url_for("form"))
+
     return render_template("success.html", **lead_data)
-
-@app.route("/event-types")
-def get_event_types():
-    token = request.args.get("token")
-    if not token:
-        return {"error": "Missing token"}, 400
-
-    headers = {"Authorization": f"Bearer {token}"}
-    try:
-        resp = requests.get("https://sync.realnex.com/api/v1/Crm/settings/eventtypes", headers=headers)
-        return resp.json(), resp.status_code
-    except Exception as e:
-        return {"error": str(e)}, 500
 
 if __name__ == "__main__":
     app.run(debug=os.getenv("FLASK_DEBUG", "False").lower() == "true")
