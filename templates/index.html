@@ -2,52 +2,105 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>RealNex Lead Form Generator</title>
+  <title>RealNex Lead Form Snippet Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    :root {
+      --primary: #007BFF;
+      --background: #f4f6f8;
+      --card-bg: #fff;
+      --border-radius: 12px;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
     body {
-      font-family: sans-serif;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--background);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 2rem;
       max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-    }
-    input, button, textarea {
       width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      font-size: 16px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
     }
+
+    h2 {
+      margin-top: 0;
+      color: #333;
+      font-size: 1.6rem;
+    }
+
+    label {
+      display: block;
+      margin: 1rem 0 0.25rem;
+      font-weight: 500;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
     textarea {
-      height: 140px;
+      min-height: 150px;
+      resize: vertical;
     }
-    #success-message {
-      color: green;
-      font-weight: bold;
-      display: none;
-      margin-top: 10px;
+
+    button {
+      background-color: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #0056c7;
+    }
+
+    .copy-btn {
+      margin-top: 0.5rem;
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .copy-btn:hover {
+      background: #d4d4d4;
     }
   </style>
 </head>
 <body>
-  <h2>🛠️ RealNex Lead Form Snippet Generator</h2>
+  <div class="card">
+    <h2>RealNex Lead Form Snippet Generator</h2>
 
-  <label for="token">Your RealNex API Token (will be hidden):</label>
-  <input type="password" id="token" placeholder="Paste your RealNex token" />
+    <label for="token">Your RealNex API Token (will be hidden):</label>
+    <input type="password" id="token" placeholder="Paste your RealNex token" />
 
-  <button onclick="generateSnippet()">Generate HTML Snippet</button>
+    <button onclick="generateSnippet()">Generate HTML Snippet</button>
 
-  <h3>📋 Copy this code into your website:</h3>
-  <textarea id="snippet" readonly></textarea>
-
-  <button onclick="copyToClipboard()">Copy to Clipboard</button>
-  <div id="success-message">✅ Snippet generated and copied!</div>
+    <label for="snippet">Copy this code into your website:</label>
+    <textarea id="snippet" readonly></textarea>
+    <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+  </div>
 
   <script>
     function generateSnippet() {
       const token = document.getElementById("token").value.trim();
-      const snippetBox = document.getElementById("snippet");
-      const message = document.getElementById("success-message");
-
       if (!token) {
         alert("Please enter your RealNex token.");
         return;
@@ -61,20 +114,15 @@
 <!-- End RealNex Lead Form -->
       `.trim();
 
-      snippetBox.value = snippet;
-      message.style.display = "block";
+      document.getElementById("snippet").value = snippet;
     }
 
     function copyToClipboard() {
-      const snippetBox = document.getElementById("snippet");
-      snippetBox.select();
+      const snippet = document.getElementById("snippet");
+      snippet.select();
       document.execCommand("copy");
+      alert("Snippet copied to clipboard!");
     }
-
-    // Auto-select when clicked
-    document.getElementById("snippet").addEventListener("focus", function () {
-      this.select();
-    });
   </script>
 </body>
 </html>
