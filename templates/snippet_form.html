@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Contact Us Snippet Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary: #007BFF;
+      --background: #f4f6f8;
+      --card-bg: #fff;
+      --border-radius: 12px;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--background);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 2rem;
+      max-width: 600px;
+      width: 100%;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #333;
+      font-size: 1.6rem;
+    }
+
+    label {
+      display: block;
+      margin: 1rem 0 0.25rem;
+      font-weight: 500;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #0056c7;
+    }
+
+    .copy-btn {
+      margin-top: 0.5rem;
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .copy-btn:hover {
+      background: #d4d4d4;
+    }
+
+    .preview {
+      margin-top: 2rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>RealNex Contact Us Snippet Generator</h2>
+
+    <form method="POST">
+      <label for="token">CRM API Token:</label>
+      <input type="password" name="token" id="token" value="{{ token }}" placeholder="Enter your RealNex token" required>
+      <button type="submit">Generate Snippet</button>
+    </form>
+
+    {% if generated_code %}
+      <label for="snippet">Copy this code into your website:</label>
+      <textarea id="snippet" readonly>{{ generated_code }}</textarea>
+      <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+
+      <div class="preview">
+        <h3>Live Preview</h3>
+        {{ generated_code | safe }}
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    function copyToClipboard() {
+      const snippet = document.getElementById("snippet");
+      snippet.select();
+      document.execCommand("copy");
+      alert("Snippet copied to clipboard!");
+    }
+  </script>
+</body>
+</html>
