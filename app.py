@@ -51,6 +51,11 @@ def lead_form():
         "company": "",
         "address": "",
         "comments": "",
+        "investor_type": "",
+        "tenant_size_range": "",
+        "utm_source": request.args.get("utm_source", ""),
+        "utm_medium": request.args.get("utm_medium", ""),
+        "utm_campaign": request.args.get("utm_campaign", ""),
         "admin_token": admin_token
     }
 
@@ -62,7 +67,9 @@ def lead_form():
             "phone": sanitize_input(request.form.get("phone")),
             "company": sanitize_input(request.form.get("company")),
             "address": sanitize_input(request.form.get("address")),
-            "comments": sanitize_input(request.form.get("comments"))
+            "comments": sanitize_input(request.form.get("comments")),
+            "investor_type": sanitize_input(request.form.get("investor_type")),
+            "tenant_size_range": sanitize_input(request.form.get("tenant_size_range"))
         })
 
         recaptcha_response = request.form.get("g-recaptcha-response")
@@ -115,7 +122,14 @@ def lead_form():
                         "address1": form_data["address"],
                         "company": form_data["company"]
                     },
-                    "phones": [{"number": form_data["phone"], "type": "work"}] if form_data["phone"] else []
+                    "phones": [{"number": form_data["phone"], "type": "work"}] if form_data["phone"] else [],
+                    "customFields": [
+                        {"fieldName": "Investor Type", "value": form_data["investor_type"]},
+                        {"fieldName": "Tenant Size Range", "value": form_data["tenant_size_range"]}
+                    ],
+                    "notes": f"UTM Source: {form_data['utm_source']}, "
+                             f"Medium: {form_data['utm_medium']}, "
+                             f"Campaign: {form_data['utm_campaign']}"
                 }
                 contact_resp = requests.post(
                     "https://sync.realnex.com/api/v1/Crm/contact",
@@ -148,7 +162,10 @@ def lead_form():
             # === History Record ===
             history_payload = {
                 "subject": "Weblead Submission",
-                "notes": form_data["comments"] or "Submitted via web form.",
+                "notes": f"{form_data['comments'] or 'Submitted via web form.'}\n\n"
+                         f"UTM Source: {form_data['utm_source']}, "
+                         f"Medium: {form_data['utm_medium']}, "
+                         f"Campaign: {form_data['utm_campaign']}",
                 "eventTypeKey": "Note",
                 "contactKey": contact_key
             }
