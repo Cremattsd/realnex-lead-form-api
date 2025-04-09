@@ -31,12 +31,12 @@ def validate_phone(phone):
     digits_only = re.sub(r'\D', '', phone)
     return digits_only if 7 <= len(digits_only) <= 15 else None
 
-# === Routes ===
-
+# === Home ===
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
+# === Contact Form (already working) ===
 @app.route("/form", methods=["GET", "POST"])
 def lead_form():
     token = request.args.get("token") or sanitize_input(request.form.get("token"))
@@ -91,7 +91,6 @@ def lead_form():
                 flash(e, "error")
             return render_template("form.html", messages=session.get('_flashes', []), **form_data)
 
-        # === reCAPTCHA verification ===
         recaptcha_verify = requests.post(
             "https://www.google.com/recaptcha/api/siteverify",
             data={"secret": RECAPTCHA_SECRET_KEY, "response": recaptcha_response}
@@ -103,7 +102,7 @@ def lead_form():
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
         try:
-            # === Contact Lookup or Creation ===
+            # Contact Lookup or Creation
             contact_key = None
             search_resp = requests.get(
                 f"https://sync.realnex.com/api/v1/Crm/contacts?email={form_data['email']}", headers=headers)
@@ -139,7 +138,7 @@ def lead_form():
                 contact = contact_resp.json()
                 contact_key = contact.get("contact", {}).get("key")
 
-            # === Company Lookup or Creation ===
+            # Company Handling
             company_key = None
             if form_data["company"]:
                 company_search = requests.get(
@@ -151,15 +150,12 @@ def lead_form():
                     comp_resp = requests.post(
                         "https://sync.realnex.com/api/v1/Crm/company",
                         headers=headers,
-                        json={
-                            "name": form_data["company"],
-                            "address1": form_data["address"]
-                        }
+                        json={"name": form_data["company"], "address1": form_data["address"]}
                     )
                     comp_data = comp_resp.json()
                     company_key = comp_data.get("company", {}).get("key")
 
-            # === History Record ===
+            # History Record
             history_payload = {
                 "subject": "Weblead Submission",
                 "notes": f"{form_data['comments'] or 'Submitted via web form.'}\n\n"
@@ -172,33 +168,124 @@ def lead_form():
             if company_key:
                 history_payload["companyKey"] = company_key
 
-            history_resp = requests.post(
-                "https://sync.realnex.com/api/v1/Crm/history",
-                headers=headers,
-                json=history_payload
-            )
+            requests.post("https://sync.realnex.com/api/v1/Crm/history", headers=headers, json=history_payload)
 
-            if history_resp.status_code != 200:
-                logging.warning("Failed to create history record: %s", history_resp.text)
-
-            # === Save and Redirect ===
             session['lead_data'] = {
                 'first_name': form_data["first_name"],
                 'last_name': form_data["last_name"],
                 'email': form_data["email"],
                 'company': form_data["company"]
             }
-
-            logging.info("Lead successfully submitted: %s", session['lead_data'])
             return redirect(url_for("lead_success"))
 
         except Exception as e:
-            logging.error("Submission error: %s", str(e))
+            logging.error("Error submitting to RealNex: %s", str(e))
             flash(f"Error submitting to RealNex: {str(e)}", "error")
             return render_template("form.html", messages=session.get('_flashes', []), **form_data)
 
     return render_template("form.html", messages=session.get('_flashes', []), **form_data)
 
+# === Listings View + Inquiry Form ===
+@app.route("/listings", methods=["GET", "POST"])
+def listings():
+    company_id = request.args.get("companyId")
+    if not company_id:
+        return "Company ID is required", 400
+
+    listings_data = []
+    inquiry_result = None
+
+    if request.method == "GET":
+        try:
+            response = requests.get(
+                f"https://sync.realnex.com/api/v2/marketplace/listings/company/{company_id}"
+            )
+            if response.status_code == 200:
+                listings_data = response.json()
+            else:
+                app.logger.warning("Failed to fetch listings: %s", response.text)
+        except Exception as e:
+            app.logger.error("Error fetching listings: %s", str(e))
+
+    elif request.method == "POST":
+        try:
+            first_name = sanitize_input(request.form.get("first_name"))
+            last_name = sanitize_input(request.form.get("last_name"))
+            email = sanitize_input(request.form.get("email"))
+            phone = sanitize_input(request.form.get("phone"))
+            message = sanitize_input(request.form.get("message"))
+            listing_id = sanitize_input(request.form.get("listing_id"))
+            token = request.form.get("token")
+
+            if not all([first_name, last_name, email, token]):
+                flash("Missing required fields", "error")
+                return redirect(request.url)
+
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+
+            contact_payload = {
+                "firstName": first_name,
+                "lastName": last_name,
+                "email": email,
+                "phones": [{"number": phone, "type": "work"}] if phone else [],
+                "prospect": True
+            }
+
+            contact_resp = requests.post(
+                "https://sync.realnex.com/api/v1/Crm/contact",
+                headers=headers,
+                json=contact_payload
+            )
+            contact = contact_resp.json()
+            contact_key = contact.get("contact", {}).get("key")
+
+            history_payload = {
+                "subject": f"Listing Inquiry: {listing_id}",
+                "notes": message or "Submitted from listing form",
+                "eventTypeKey": "Note",
+                "contactKey": contact_key
+            }
+
+            history_resp = requests.post(
+                "https://sync.realnex.com/api/v1/Crm/history",
+                headers=headers,
+                json=history_payload
+            )
+
+            if history_resp.status_code == 200:
+                inquiry_result = "Thank you! Your inquiry has been submitted."
+            else:
+                flash("Failed to log inquiry to CRM.", "error")
+
+        except Exception as e:
+            app.logger.error("Error submitting inquiry: %s", str(e))
+            flash("Something went wrong while submitting your inquiry.", "error")
+
+    return render_template("listings.html", listings=listings_data, inquiry_result=inquiry_result)
+
+# === Snippet Generator for Listings ===
+@app.route("/snippet/listings", methods=["GET", "POST"])
+def snippet_listings():
+    generated_code = ""
+    company_id = ""
+    token = ""
+
+    if request.method == "POST":
+        company_id = sanitize_input(request.form.get("company_id"))
+        token = sanitize_input(request.form.get("token"))
+
+        if company_id and token:
+            iframe_url = f"https://yourdomain.com/listings?companyId={company_id}&token={token}"
+            generated_code = f'<iframe src="{iframe_url}" width="100%" height="800" frameborder="0"></iframe>'
+        else:
+            flash("Both Company ID and CRM Token are required.", "error")
+
+    return render_template("snippet_listings.html", generated_code=generated_code, company_id=company_id, token=token)
+
+# === Success Page ===
 @app.route("/success")
 def lead_success():
     lead_data = session.pop("lead_data", {})
