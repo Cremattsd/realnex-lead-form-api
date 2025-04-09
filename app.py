@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 # Load .env variables
 load_dotenv()
 
-# === Flask Config ===
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "super-secret")
 RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY", "")
@@ -20,7 +19,7 @@ logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(message)s',
 )
 
-# === Utils ===
+# === Utilities ===
 def sanitize_input(input_string):
     return re.sub(r'[<>"\'&;()]', '', input_string).strip() if input_string else ""
 
@@ -31,12 +30,12 @@ def validate_phone(phone):
     digits_only = re.sub(r'\D', '', phone)
     return digits_only if 7 <= len(digits_only) <= 15 else None
 
-# === Home ===
+# === Home / Contact Form Embed ===
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    return redirect(url_for("snippet_form"))
 
-# === Contact Form (already working) ===
+# === Contact Form Submission ===
 @app.route("/form", methods=["GET", "POST"])
 def lead_form():
     token = request.args.get("token") or sanitize_input(request.form.get("token"))
@@ -102,7 +101,6 @@ def lead_form():
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
         try:
-            # Contact Lookup or Creation
             contact_key = None
             search_resp = requests.get(
                 f"https://sync.realnex.com/api/v1/Crm/contacts?email={form_data['email']}", headers=headers)
@@ -138,7 +136,6 @@ def lead_form():
                 contact = contact_resp.json()
                 contact_key = contact.get("contact", {}).get("key")
 
-            # Company Handling
             company_key = None
             if form_data["company"]:
                 company_search = requests.get(
@@ -155,7 +152,6 @@ def lead_form():
                     comp_data = comp_resp.json()
                     company_key = comp_data.get("company", {}).get("key")
 
-            # History Record
             history_payload = {
                 "subject": "Weblead Submission",
                 "notes": f"{form_data['comments'] or 'Submitted via web form.'}\n\n"
@@ -185,7 +181,7 @@ def lead_form():
 
     return render_template("form.html", messages=session.get('_flashes', []), **form_data)
 
-# === Listings View + Inquiry Form ===
+# === Listings Viewer ===
 @app.route("/listings", methods=["GET", "POST"])
 def listings():
     company_id = request.args.get("companyId")
@@ -249,16 +245,13 @@ def listings():
                 "contactKey": contact_key
             }
 
-            history_resp = requests.post(
+            requests.post(
                 "https://sync.realnex.com/api/v1/Crm/history",
                 headers=headers,
                 json=history_payload
             )
 
-            if history_resp.status_code == 200:
-                inquiry_result = "Thank you! Your inquiry has been submitted."
-            else:
-                flash("Failed to log inquiry to CRM.", "error")
+            inquiry_result = "Thank you! Your inquiry has been submitted."
 
         except Exception as e:
             app.logger.error("Error submitting inquiry: %s", str(e))
@@ -278,12 +271,28 @@ def snippet_listings():
         token = sanitize_input(request.form.get("token"))
 
         if company_id and token:
-            iframe_url = f"https://yourdomain.com/listings?companyId={company_id}&token={token}"
+            iframe_url = f"https://realnex-lead-form-api.onrender.com/listings?companyId={company_id}&token={token}"
             generated_code = f'<iframe src="{iframe_url}" width="100%" height="800" frameborder="0"></iframe>'
         else:
             flash("Both Company ID and CRM Token are required.", "error")
 
     return render_template("snippet_listings.html", generated_code=generated_code, company_id=company_id, token=token)
+
+# === Snippet Generator for Contact Us Form ===
+@app.route("/snippet/form", methods=["GET", "POST"])
+def snippet_form():
+    generated_code = ""
+    token = ""
+
+    if request.method == "POST":
+        token = sanitize_input(request.form.get("token"))
+        if token:
+            iframe_url = f"https://realnex-lead-form-api.onrender.com/form?token={token}"
+            generated_code = f'<iframe src="{iframe_url}" width="100%" height="600" frameborder="0"></iframe>'
+        else:
+            flash("CRM Token is required.", "error")
+
+    return render_template("snippet_form.html", generated_code=generated_code, token=token)
 
 # === Success Page ===
 @app.route("/success")
