@@ -2,15 +2,25 @@ from flask import Flask, request, render_template, redirect, url_for, flash, ses
 import requests
 import os
 import re
+import logging
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load .env variables
 load_dotenv()
 
+# === Flask Config ===
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "super-secret")
 RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY", "")
 
+# === Logging Config ===
+logging.basicConfig(
+    filename='realnex_lead_form.log',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+)
+
+# === Utils ===
 def sanitize_input(input_string):
     return re.sub(r'[<>"\'&;()]', '', input_string).strip() if input_string else ""
 
@@ -20,6 +30,8 @@ def validate_email(email):
 def validate_phone(phone):
     digits_only = re.sub(r'\D', '', phone)
     return digits_only if 7 <= len(digits_only) <= 15 else None
+
+# === Routes ===
 
 @app.route("/", methods=["GET"])
 def index():
@@ -72,7 +84,7 @@ def lead_form():
                 flash(e, "error")
             return render_template("form.html", messages=session.get('_flashes', []), **form_data)
 
-        # reCAPTCHA verification
+        # === reCAPTCHA verification ===
         recaptcha_verify = requests.post(
             "https://www.google.com/recaptcha/api/siteverify",
             data={"secret": RECAPTCHA_SECRET_KEY, "response": recaptcha_response}
@@ -84,13 +96,13 @@ def lead_form():
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
         try:
-            # Contact check
+            # === Contact Lookup or Creation ===
+            contact_key = None
             search_resp = requests.get(
                 f"https://sync.realnex.com/api/v1/Crm/contacts?email={form_data['email']}", headers=headers)
             contact_data = search_resp.json()
             existing_contact = next((c for c in contact_data.get("items", [])), None)
 
-            contact_key = None
             if existing_contact:
                 contact_key = existing_contact["key"]
             else:
@@ -113,7 +125,7 @@ def lead_form():
                 contact = contact_resp.json()
                 contact_key = contact.get("contact", {}).get("key")
 
-            # Company handling
+            # === Company Lookup or Creation ===
             company_key = None
             if form_data["company"]:
                 company_search = requests.get(
@@ -133,14 +145,13 @@ def lead_form():
                     comp_data = comp_resp.json()
                     company_key = comp_data.get("company", {}).get("key")
 
-            # History creation
+            # === History Record ===
             history_payload = {
                 "subject": "Weblead Submission",
                 "notes": form_data["comments"] or "Submitted via web form.",
                 "eventTypeKey": "Note",
                 "contactKey": contact_key
             }
-
             if company_key:
                 history_payload["companyKey"] = company_key
 
@@ -151,17 +162,21 @@ def lead_form():
             )
 
             if history_resp.status_code != 200:
-                app.logger.warning("Failed to create history record: %s", history_resp.text)
+                logging.warning("Failed to create history record: %s", history_resp.text)
 
+            # === Save and Redirect ===
             session['lead_data'] = {
                 'first_name': form_data["first_name"],
                 'last_name': form_data["last_name"],
                 'email': form_data["email"],
                 'company': form_data["company"]
             }
+
+            logging.info("Lead successfully submitted: %s", session['lead_data'])
             return redirect(url_for("lead_success"))
 
         except Exception as e:
+            logging.error("Submission error: %s", str(e))
             flash(f"Error submitting to RealNex: {str(e)}", "error")
             return render_template("form.html", messages=session.get('_flashes', []), **form_data)
 
