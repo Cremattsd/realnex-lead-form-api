@@ -1,128 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>RealNex Lead Form Snippet Generator</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    :root {
-      --primary: #007BFF;
-      --background: #f4f6f8;
-      --card-bg: #fff;
-      --border-radius: 12px;
-      --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    }
-
-    body {
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--background);
-      margin: 0;
-      padding: 2rem;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-    }
-
-    .card {
-      background: var(--card-bg);
-      padding: 2rem;
-      max-width: 600px;
-      width: 100%;
-      border-radius: var(--border-radius);
-      box-shadow: var(--shadow);
-    }
-
-    h2 {
-      margin-top: 0;
-      color: #333;
-      font-size: 1.6rem;
-    }
-
-    label {
-      display: block;
-      margin: 1rem 0 0.25rem;
-      font-weight: 500;
-    }
-
-    input, textarea, button {
-      width: 100%;
-      padding: 0.75rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-
-    textarea {
-      min-height: 150px;
-      resize: vertical;
-    }
-
-    button {
-      background-color: var(--primary);
-      color: #fff;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      margin-top: 1rem;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background-color: #0056c7;
-    }
-
-    .copy-btn {
-      margin-top: 0.5rem;
-      background: #e0e0e0;
-      color: #333;
-    }
-
-    .copy-btn:hover {
-      background: #d4d4d4;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate snippets for RealNex Contact Us and Listings forms">
+    <meta property="og:title" content="RealNex Snippet Generator">
+    <meta property="og:description" content="Easily generate snippets for your RealNex-powered website.">
+    <title>RealNex Snippet Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <div class="card">
-    <h2>RealNex Lead Form Snippet Generator</h2>
-
-    <label for="token">Your RealNex API Token (will be hidden):</label>
-    <input type="password" id="token" placeholder="Paste your RealNex token" />
-
-    <button onclick="generateSnippet()">Generate HTML Snippet</button>
-
-    <label for="snippet">Copy this code into your website:</label>
-    <textarea id="snippet" readonly></textarea>
-    <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
-  </div>
-
-  <script>
-    function generateSnippet() {
-      const token = document.getElementById("token").value.trim();
-      if (!token) {
-        alert("Please enter your RealNex token.");
-        return;
-      }
-
-      const snippet = `
-<!-- RealNex Lead Form -->
-<iframe src="https://realnex-lead-form-api.onrender.com/form?token=${encodeURIComponent(token)}"
-        width="100%" height="600" style="border:none;">
-</iframe>
-<!-- End RealNex Lead Form -->
-      `.trim();
-
-      document.getElementById("snippet").value = snippet;
-    }
-
-    function copyToClipboard() {
-      const snippet = document.getElementById("snippet");
-      snippet.select();
-      document.execCommand("copy");
-      alert("Snippet copied to clipboard!");
-    }
-  </script>
+    <div class="card">
+        <h2>RealNex Snippet Generator</h2>
+        <p>Select the type of snippet you'd like to create:</p>
+        <a href="{{ url_for('generate_snippet', snippet_type='contact') }}" class="button" role="button" aria-label="Generate Contact Us Snippet">Contact Us Snippet</a>
+        <a href="{{ url_for('generate_snippet', snippet_type='listings') }}" class="button" role="button" aria-label="Generate Listings and Contact Us Snippet">Listings + Contact Us Snippet</a>
+    </div>
 </body>
 </html>
