@@ -1,15 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Submission Successful</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snippet Generated - RealNex Snippet Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + (theme or 'light') + '.css') }}">
 </head>
 <body>
-    <h2>Thank you!</h2>
-    <p>Your information has been submitted successfully.</p>
-    <p><strong>Name:</strong> {{ first_name }} {{ last_name }}</p>
-    <p><strong>Email:</strong> {{ email }}</p>
-    {% if company %}
-        <p><strong>Company:</strong> {{ company }}</p>
-    {% endif %}
+    <div class="card">
+        <h2>Snippet Generated Successfully</h2>
+        
+        <p>Your snippet has been generated. Follow the steps below to embed it on your website.</p>
+        
+        <div class="snippet-output">
+            <h3>1. Copy the Embed Code</h3>
+            <p>Add this code to your website (works on any platform, including WordPress, static HTML, etc.):</p>
+            <textarea id="snippet" readonly aria-readonly="true">{{ shortcode }}</textarea>
+            <button class="copy-btn" onclick="copyToClipboard()" onkeypress="if(event.key === 'Enter') copyToClipboard()">Copy to Clipboard</button>
+            
+            <h3>2. Customize Styling</h3>
+            <p>You can customize the appearance of the form using the following options:</p>
+            <ul>
+                <li><strong>Predefined Themes:</strong> The embed code includes a <code>theme</code> parameter (currently set to "{{ theme or 'light' }}"). You can change it to one of the following:
+                    <ul>
+                        <li><code>theme=light</code> - Light theme (default)</li>
+                        <li><code>theme=dark</code> - Dark theme</li>
+                        <li><code>theme=modern</code> - Modern theme</li>
+                    </ul>
+                    Example: <code>&theme=dark</code>
+                </li>
+                <li><strong>Custom CSS:</strong> Add or update the <code>style_url</code> parameter in the script tag to point to your own CSS file:
+                    <pre><script src="...&style_url=https://example.com/custom.css"></script></pre>
+                    Your CSS file can override the default styles. For example:
+                    <pre>
+.realnex-form-container, .realnex-listings-container {{
+    background-color: #f0f8ff; /* Light blue background */
+}}
+.realnex-form button {{
+    background-color: #ff4500; /* Orange-red button */
+}}
+                    </pre>
+                </li>
+            </ul>
+            
+            <h3>3. Preview</h3>
+            <p>This is a preview of what your embed will look like with the selected styling:</p>
+            <div class="preview">
+                {{ preview | safe }}
+            </div>
+            
+            <h3>4. Troubleshooting</h3>
+            <p>If the form does not load, check the following:</p>
+            <ul>
+                <li>Ensure your API Token and Company ID (if required) are correct.</li>
+                <li>The embed code expires after 24 hours. Generate a new code if needed.</li>
+                <li>Verify that your custom CSS URL (if provided) is accessible and valid.</li>
+                <li>Check your browser's console for error messages.</li>
+            </ul>
+            
+            <p><a href="{{ url_for('index') }}" class="button" role="button" aria-label="Generate Another Snippet">Generate Another Snippet</a></p>
+        </div>
+    </div>
+    
+    <script>
+        function copyToClipboard() {
+            const snippet = document.getElementById('snippet');
+            snippet.select();
+            document.execCommand('copy');
+            alert('Snippet copied to clipboard!');
+        }
+    </script>
 </body>
 </html>
