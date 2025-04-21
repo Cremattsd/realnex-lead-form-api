@@ -277,6 +277,9 @@ def serve_embed_js():
         except Exception:
             custom_style_script = "console.warn('RealNex Embed: Invalid custom style URL');"
     
+    # Prepare the HTML content by replacing backticks and newlines outside the f-string
+    escaped_html_content = html_content.replace('`', '\\`').replace('\n', ' ')
+    
     # JavaScript to inject the HTML, load styles, and handle form submission and navigation
     js_content = f"""
     (function() {{
@@ -296,7 +299,7 @@ def serve_embed_js():
         {custom_style_script}
         
         // Inject HTML
-        container.innerHTML = `{html_content.replace('`', '\\`').replace('\n', ' ')}`;
+        container.innerHTML = `{escaped_html_content}`;
         
         // Handle tile clicks to show detailed view
         var tiles = container.querySelectorAll('.realnex-listing-tile');
