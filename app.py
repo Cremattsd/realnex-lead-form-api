@@ -69,6 +69,7 @@ def validate_realnex_token(token, company_id=None):
 @app.route('/')
 def index():
     form = SnippetForm()
+    logger.info("Rendering index page")
     return render_template('index.html', form=form)
 
 # Snippet generation route
@@ -84,6 +85,7 @@ def snippet():
             # Validate token with RealNex API
             api_response = validate_realnex_token(token, company_id)
             if not api_response:
+                logger.error(f"Invalid token or API error for token: {token}")
                 return render_template('snippet.html', form=form, error="Invalid token or API error", snippet_code="")
 
             # Store credentials in database
@@ -97,8 +99,10 @@ def snippet():
             if company_id:
                 iframe_url += f"&company_id={company_id}"
             snippet_code = f'<iframe src="{iframe_url}" width="100%" height="600" frameborder="0" style="border:0;"></iframe>'
+            logger.info(f"Generated snippet for token: {token}, type: {snippet_type}")
             return render_template('snippet.html', form=form, snippet_code=snippet_code, error=None)
         else:
+            logger.error("Form validation failed")
             return render_template('snippet.html', form=form, error="Form validation failed", snippet_code="")
     
     # GET request: show form
@@ -108,6 +112,7 @@ def snippet():
     form.snippet_type.data = snippet_type
     form.token.data = token
     form.company_id.data = company_id
+    logger.info(f"Rendering snippet page with type: {snippet_type}")
     return render_template('snippet.html', form=form, snippet_code="", error=None)
 
 # Form rendering route (for iframe)
@@ -119,9 +124,17 @@ def form():
     
     # Validate token
     if not validate_realnex_token(token, company_id):
+        logger.error(f"Invalid token for form: {token}")
         return "Invalid token", 403
     
+    logger.info(f"Rendering form for type: {snippet_type}, token: {token}")
     return render_template('form.html', snippet_type=snippet_type, token=token, company_id=company_id)
+
+# Debug route for CSS
+@app.route('/test_css')
+def test_css():
+    logger.info("Serving test CSS page")
+    return render_template('index.html', form=SnippetForm())
 
 if __name__ == '__main__':
     app.run(debug=True)
