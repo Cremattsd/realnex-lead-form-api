@@ -1,9 +1,12 @@
 services:
   - type: web
-    name: realnex-lead-api
+    name: realnex-lead-form-api
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"  # Updated to use gunicorn
     envVars:
-      - key: GITHUB_TOKEN
-        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.9.0
