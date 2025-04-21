@@ -14,7 +14,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'  # Replace with a secure key in production
 
 # Configuration
-API_BASE_URL = "https://sync.realnex.com/api/v1"
+API_BASE_URL_V1 = "https://sync.realnex.com/api/v1"  # For CRM endpoints (V1 API)
+API_BASE_URL_V2 = "https://sync.realnex.com/api/v1"  # For Listings endpoint (V2 API)
 EMBED_URL = "https://realnex-lead-form-api.onrender.com"
 
 # Initialize SQLite database
@@ -72,7 +73,7 @@ def generate_snippet():
         custom_style_url = form.custom_style_url.data.strip() if form.custom_style_url.data else ''
         theme = form.theme.data if form.theme.data else 'light'
         
-        # Validate credentials
+        # Validate credentials (using a V1 endpoint for validation)
         headers = {
             'Authorization': f'Bearer {token}',
             'Content-Type': 'application/json'
@@ -82,7 +83,8 @@ def generate_snippet():
         
         try:
             endpoint = '/Crm/contacts' if snippet_type == 'contact' else '/Crm/listings'
-            response = requests.get(f"{API_BASE_URL}{endpoint}", headers=headers, timeout=5)
+            base_url = API_BASE_URL_V1 if snippet_type == 'contact' else API_BASE_URL_V2
+            response = requests.get(f"{base_url}{endpoint}", headers=headers, timeout=5)
             
             if response.status_code == 200:
                 # Generate a unique ID for this snippet
@@ -198,7 +200,7 @@ def serve_embed_js():
     if snippet_type == 'contact':
         html_content = render_template('contact_form.html', embed_url=EMBED_URL, unique_id=unique_id)
     else:
-        # Fetch listings
+        # Fetch listings using V2 API
         listings = []
         headers = {
             'Authorization': f'Bearer {token}',
@@ -206,25 +208,46 @@ def serve_embed_js():
         }
         if company_id:
             headers['X-Company-ID'] = company_id
+        else:
+            return Response(
+                """document.getElementById('realnex-form-""" + unique_id + """').innerHTML = '<p role="alert" style="color: red;">Error: Company ID is required for listings.</p>';""",
+                mimetype='application/javascript'
+            )
         
         try:
-            response = requests.get(f"{API_BASE_URL}/Crm/listings", headers=headers, timeout=5)
+            response = requests.get(f"{API_BASE_URL_V2}/Crm/listings", headers=headers, timeout=5)
             if response.status_code == 200:
-                listings = response.json().get('items', [])
-                # Sanitize listing data to prevent XSS
+                response_data = response.json()
+                listings = response_data.get('data', response_data.get('items', []))
                 for listing in listings:
+                    listing['key'] = listing.get('id', listing.get('key', ''))
+                    listing['title'] = listing.get('name', listing.get('title', 'Untitled Listing'))
+                    listing['description'] = listing.get('details', listing.get('description', 'No description available.'))
+                    listing['address'] = listing.get('location', listing.get('address', 'N/A'))
+                    # Additional fields for detailed view
+                    listing['price'] = listing.get('price', 'N/A')
+                    listing['squareFootage'] = listing.get('squareFootage', 'N/A')
+                    # Handle images
+                    listing['images'] = listing.get('images', [])
+                    if listing['images'] and isinstance(listing['images'], list):
+                        listing['thumbnail'] = listing['images'][0].get('url', '')
+                    else:
+                        listing['thumbnail'] = ''
+                    # Sanitize strings to prevent XSS
                     for key in listing:
                         if isinstance(listing[key], str):
                             listing[key] = html.escape(listing[key])
-        except requests.RequestException:
-            listings = []
+        except requests.RequestException as e:
+            error_message = f"Failed to fetch listings: {str(e)}"
+            return Response(
+                f"""document.getElementById('realnex-form-{unique_id}').innerHTML = '<p role="alert" style="color: red;">{error_message}</p>';""",
+                mimetype='application/javascript'
+            )
         
         if not listings:
             html_content = "<p>No listings found.</p>"
         else:
-            listings_html = ""
-            for listing in listings:
-                listings_html += render_template('listing_form.html', embed_url=EMBED_URL, unique_id=unique_id, listing=listing)
+            listings_html = render_template('listing_form.html', embed_url=EMBED_URL, unique_id=unique_id, listings=listings)
             html_content = f'<div class="realnex-listings-container">{listings_html}</div>'
     
     # Determine theme CSS file
@@ -247,7 +270,7 @@ def serve_embed_js():
         except Exception:
             custom_style_script = "console.warn('RealNex Embed: Invalid custom style URL');"
     
-    # JavaScript to inject the HTML, load styles, and handle form submission
+    # JavaScript to inject the HTML, load styles, and handle form submission and navigation
     js_content = f"""
     (function() {{
         var container = document.getElementById('realnex-form-{unique_id}');
@@ -267,6 +290,71 @@ def serve_embed_js():
         
         // Inject HTML
         container.innerHTML = `{html_content.replace('`', '\\`').replace('\n', ' ')}`;
+        
+        // Handle tile clicks to show detailed view
+        var tiles = container.querySelectorAll('.realnex-listing-tile');
+        var currentView = 'tile'; // Track current view (tile or detail)
+        var currentListing = null; // Track currently displayed listing
+        
+        tiles.forEach(function(tile) {{
+            tile.addEventListener('click', function() {{
+                var listingId = tile.getAttribute('data-listing-id');
+                var listing = JSON.parse(decodeURIComponent(tile.getAttribute('data-listing')));
+                
+                // Hide tile view
+                container.querySelector('.realnex-tile-view').style.display = 'none';
+                
+                // Show detailed view
+                var detailedView = container.querySelector('.realnex-detailed-view-' + listingId);
+                if (detailedView) {{
+                    detailedView.style.display = 'block';
+                }}
+                
+                currentView = 'detail';
+                currentListing = listingId;
+                
+                // Initialize carousel
+                var carouselImages = detailedView.querySelectorAll('.carousel-image');
+                var currentIndex = 0;
+                
+                function updateCarousel() {{
+                    carouselImages.forEach(function(img, index) {{
+                        img.style.display = index === currentIndex ? 'block' : 'none';
+                    }});
+                    detailedView.querySelector('.carousel-prev').style.display = carouselImages.length > 1 ? 'block' : 'none';
+                    detailedView.querySelector('.carousel-next').style.display = carouselImages.length > 1 ? 'block' : 'none';
+                }}
+                
+                detailedView.querySelector('.carousel-prev').addEventListener('click', function() {{
+                    currentIndex = (currentIndex - 1 + carouselImages.length) % carouselImages.length;
+                    updateCarousel();
+                }});
+                
+                detailedView.querySelector('.carousel-next').addEventListener('click', function() {{
+                    currentIndex = (currentIndex + 1) % carouselImages.length;
+                    updateCarousel();
+                }});
+                
+                updateCarousel();
+            }});
+        }});
+        
+        // Handle back button to return to tile view
+        var backButtons = container.querySelectorAll('.back-to-tiles');
+        backButtons.forEach(function(button) {{
+            button.addEventListener('click', function() {{
+                // Hide all detailed views
+                container.querySelectorAll('.realnex-detailed-view').forEach(function(view) {{
+                    view.style.display = 'none';
+                }});
+                
+                // Show tile view
+                container.querySelector('.realnex-tile-view').style.display = 'grid';
+                
+                currentView = 'tile';
+                currentListing = null;
+            }});
+        }});
         
         // Handle form submissions with AJAX
         var forms = container.querySelectorAll('.realnex-form');
@@ -356,7 +444,8 @@ def submit_form():
         'address': html.escape(request.form.get('realnex_address', '').strip()),
         'comments': html.escape(request.form.get('realnex_comments', '').strip()),
         'listing_key': html.escape(request.form.get('listing_key', '')),
-        'listing_title': html.escape(request.form.get('listing_title', ''))
+        'listing_title': html.escape(request.form.get('listing_title', '')),
+        'listing_address': html.escape(request.form.get('listing_address', ''))
     }
     
     # Validate required fields
@@ -372,7 +461,7 @@ def submit_form():
     if errors:
         return " ".join(errors), 400
     
-    # RealNex API headers
+    # Use V1 API for CRM operations
     headers = {
         'Authorization': f'Bearer {token}',
         'Content-Type': 'application/json'
@@ -380,9 +469,24 @@ def submit_form():
     if company_id:
         headers['X-Company-ID'] = company_id
     
+    # Match the listing address to a project in the CRM
+    project_key = None
+    if form_data['listing_address']:
+        try:
+            response = requests.get(f"{API_BASE_URL_V1}/Crm/listings", headers=headers, timeout=5)
+            if response.status_code == 200:
+                projects = response.json().get('items', [])
+                for project in projects:
+                    project_address = project.get('address', '').lower()
+                    if project_address and form_data['listing_address'].lower() in project_address:
+                        project_key = project.get('key')
+                        break
+        except requests.RequestException as e:
+            pass  # If we can't fetch projects, proceed without linking to a project
+    
     # Check if contact exists
     contact_key = None
-    search_url = f"{API_BASE_URL}/Crm/contacts?email={form_data['email']}"
+    search_url = f"{API_BASE_URL_V1}/Crm/contacts?email={form_data['email']}"
     try:
         search_response = requests.get(search_url, headers=headers, timeout=5)
         if search_response.status_code == 200:
@@ -406,7 +510,7 @@ def submit_form():
             'phones': [{'number': form_data['phone']}] if form_data['phone'] else []
         }
         try:
-            contact_response = requests.post(f"{API_BASE_URL}/Crm/contact", headers=headers, json=contact_payload, timeout=5)
+            contact_response = requests.post(f"{API_BASE_URL_V1}/Crm/contact", headers=headers, json=contact_payload, timeout=5)
             if contact_response.status_code == 201:
                 contact_key = contact_response.json().get('contact', {}).get('key')
             else:
@@ -422,15 +526,15 @@ def submit_form():
             'address1': form_data['address']
         }
         try:
-            company_response = requests.post(f"{API_BASE_URL}/Crm/company", headers=headers, json=company_payload, timeout=5)
+            company_response = requests.post(f"{API_BASE_URL_V1}/Crm/company", headers=headers, json=company_payload, timeout=5)
             if company_response.status_code == 201:
                 company_key = company_response.json().get('company', {}).get('key')
         except requests.RequestException:
             pass  # Company creation is optional
     
-    # Create history note
+    # Create history note and link to project
     if contact_key:
-        linked_listing_keys = [form_data['listing_key']] if form_data['listing_key'] else []
+        linked_listing_keys = [project_key] if project_key else [form_data['listing_key']] if form_data['listing_key'] else []
         history_payload = {
             'subject': f"{'Listing Inquiry: ' + form_data['listing_title'] if form_data['listing_key'] else 'Weblead'}",
             'notes': form_data['comments'] or 'Submitted via web form',
@@ -440,7 +544,7 @@ def submit_form():
             'eventType': 'Note'
         }
         try:
-            history_response = requests.post(f"{API_BASE_URL}/Crm/history", headers=headers, json=history_payload, timeout=5)
+            history_response = requests.post(f"{API_BASE_URL_V1}/Crm/history", headers=headers, json=history_payload, timeout=5)
             if history_response.status_code != 201:
                 return f"API error creating history note: {history_response.json().get('message', 'Unknown error')}", 500
         except requests.RequestException as e:
