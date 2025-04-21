@@ -9,31 +9,29 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="text-2xl font-bold mb-4">
-            {% if snippet_type == 'contact' %}Contact Us{% else %}Listings + Contact Us{% endif %}
-        </h1>
-        <form method="POST" action="https://api.realnex.com/v2/leads" class="bg-white p-6 rounded shadow">
+        <h1>{% if snippet_type == 'contact' %}Contact Us{% else %}Listings + Contact Us{% endif %}</h1>
+        <form method="POST" action="https://api.realnex.com/v2/leads" class="space-y-4">
             <input type="hidden" name="token" value="{{ token }}">
             {% if company_id %}
                 <input type="hidden" name="company_id" value="{{ company_id }}">
             {% endif %}
             <div>
                 <label class="block mb-1" for="name">Name</label>
-                <input type="text" name="name" id="name" class="w-full p-2 border rounded" required>
+                <input type="text" name="name" id="name" class="w-full p-3 border rounded" required>
             </div>
             <div>
                 <label class="block mb-1" for="email">Email</label>
-                <input type="email" name="email" id="email" class="w-full p-2 border rounded" required>
+                <input type="email" name="email" id="email" class="w-full p-3 border rounded" required>
             </div>
             <div>
                 <label class="block mb-1" for="phone">Phone</label>
-                <input type="tel" name="phone" id="phone" class="w-full p-2 border rounded">
+                <input type="tel" name="phone" id="phone" class="w-full p-3 border rounded">
             </div>
             <div>
                 <label class="block mb-1" for="message">Message</label>
-                <textarea name="message" id="message" class="w-full p-2 border rounded"></textarea>
+                <textarea name="message" id="message" class="w-full p-3 border rounded"></textarea>
             </div>
-            <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 mt-4">Submit</button>
+            <button type="submit" class="w-full">Submit</button>
         </form>
     </div>
 </body>
