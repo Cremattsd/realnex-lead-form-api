@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Generate snippets for RealNex Contact Us and Listings forms">
-    <meta property="og:title" content="RealNex Snippet Generator">
-    <meta property="og:description" content="Easily generate snippets for your RealNex-powered website.">
     <title>RealNex Snippet Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-    <div class="card">
-        <h2>RealNex Snippet Generator</h2>
-        <p>Select the type of snippet you'd like to create:</p>
-        <a href="{{ url_for('generate_snippet', snippet_type='contact') }}" class="button" role="button" aria-label="Generate Contact Us Snippet">Contact Us Snippet</a>
-        <a href="{{ url_for('generate_snippet', snippet_type='listings') }}" class="button" role="button" aria-label="Generate Listings and Contact Us Snippet">Listings + Contact Us Snippet</a>
+<body class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 min-h-screen flex items-center justify-center">
+    <div class="bg-white shadow-2xl rounded-lg p-8 max-w-md w-full text-center transform transition-all hover:scale-105">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">RealNex Snippet Generator</h1>
+        <p class="text-gray-600 mb-8">Generate embeddable snippets for your RealNex CRM.</p>
+        <div class="space-y-4">
+            <a href="{{ url_for('generate_snippet', snippet_type='contact') }}" class="block bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">Contact Us Snippet</a>
+            <a href="{{ url_for('generate_snippet', snippet_type='listings') }}" class="block bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition duration-300">Listings + Contact Us Snippet</a>
+        </div>
     </div>
 </body>
 </html>
