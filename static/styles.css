@@ -1,89 +1,63 @@
-/* Custom styles for RealNex Snippet Generator */
+/* Tailwind CSS CDN */
+@import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
 
-/* Font stack for a modern, real estate-inspired look */
+/* Custom styles */
 body {
-    font-family: 'Montserrat', 'Inter', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    font-family: 'Arial', sans-serif;
+    background-color: #f7fafc;
 }
 
-/* Enhance buttons with a subtle lift effect on hover */
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+}
+
+button {
+    background-color: #2d3748;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
 button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    background-color: #4a5568;
 }
 
-/* Smooth transitions for form inputs and selects */
-input, select {
-    transition: all 0.3s ease;
+.error {
+    color: #e53e3e;
+    margin-bottom: 10px;
 }
 
-/* Custom focus state for form elements */
-input:focus, select:focus {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-    border-color: #3b82f6;
+.snippet-code {
+    background: #edf2f7;
+    padding: 10px;
+    border-radius: 4px;
+    word-break: break-all;
 }
 
-/* Add a subtle animation to cards */
-div {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Style the copy button on success.html */
-button.bg-blue-600 {
-    transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-/* Style the pre/code block for the embed code */
-pre {
-    position: relative;
-    background-color: #f3f4f6;
-    border: 1px solid #e5e7eb;
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-/* Ensure the preview section has a clean look */
-.border-gray-300 {
-    border-width: 1px;
-    border-color: #d1d5db;
-}
-
-/* Add a subtle hover effect to links */
-a {
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Custom spinner for form submission (used in embed.js) */
-.spinner {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #ffffff;
-    border-top: 2px solid transparent;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-right: 8px;
-    vertical-align: middle;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Ensure responsiveness for smaller screens */
 @media (max-width: 640px) {
-    pre {
-        font-size: 0.8rem;
+    .container {
+        padding: 10px;
     }
-    button.bg-blue-600 {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
+    form {
+        padding: 15px;
     }
-}
-
-/* Add a subtle shadow to the preview container */
-.bg-gray-50 {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
