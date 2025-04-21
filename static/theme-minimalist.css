@@ -1,0 +1,164 @@
+.realnex-form-container, .realnex-listings-container {
+    font-family: 'Montserrat', system-ui, sans-serif;
+    background: #f8f8f8;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.realnex-listings-container {
+    max-width: 100%;
+}
+
+.realnex-form-container h3, .realnex-listings-container h3 {
+    margin-top: 0;
+    color: #333;
+    font-weight: 500;
+    font-size: 1.2em;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #666;
+    font-weight: 400;
+}
+
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 0;
+    background: #fff;
+    box-sizing: border-box;
+    font-size: 0.9em;
+}
+
+.form-group textarea {
+    height: 80px;
+    resize: vertical;
+}
+
+.realnex-form button, .realnex-detailed-view button.back-to-tiles {
+    width: 100%;
+    padding: 10px;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+
+.realnex-form button:hover, .realnex-detailed-view button.back-to-tiles:hover {
+    background: #555;
+}
+
+.realnex-tile-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.realnex-listing-tile {
+    background: #fff;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.realnex-listing-tile:hover {
+    border-color: #999;
+}
+
+.realnex-listing-tile h3 {
+    margin: 8px 0 4px;
+    color: #333;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+.realnex-listing-tile p {
+    margin: 4px 0;
+    color: #666;
+    font-size: 0.85em;
+}
+
+.listing-thumbnail {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.listing-placeholder {
+    width: 100%;
+    height: 120px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+.realnex-detailed-view .carousel {
+    position: relative;
+    width: 100%;
+    max-height: 300px;
+    overflow: hidden;
+}
+
+.realnex-detailed-view .carousel-image {
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    object-fit: cover;
+}
+
+.realnex-detailed-view .carousel-prev,
+.realnex-detailed-view .carousel-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #333;
+    color: white;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.realnex-detailed-view .carousel-prev:hover,
+.realnex-detailed-view .carousel-next:hover {
+    background: #555;
+}
+
+.realnex-detailed-view .carousel-prev {
+    left: 8px;
+}
+
+.realnex-detailed-view .carousel-next {
+    right: 8px;
+}
+
+.realnex-message {
+    margin-top: 10px;
+    padding: 8px;
+}
+
+.realnex-message.success {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.realnex-message.error {
+    background: #ffe6e6;
+    color: #cc0000;
+}
