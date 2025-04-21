@@ -75,7 +75,7 @@ textarea {
 }
 
 /* Button styles */
-button {
+button, a.bg-gray-800 {
     background: #2d3748;
     color: #ffffff;
     padding: 0.75rem 1.5rem;
@@ -85,23 +85,31 @@ button {
     font-weight: 500;
     cursor: pointer;
     transition: background 0.3s ease, transform 0.2s ease;
+    text-align: center;
+    display: inline-block;
 }
 
-button:hover {
+button:hover, a.bg-gray-800:hover {
     background: #4a5568;
     transform: scale(1.05);
 }
 
-button:active {
+button:active, a.bg-gray-800:active {
     transform: scale(0.95);
 }
 
-/* Error messages */
+/* Error and success messages */
 .error {
     color: #e53e3e;
     font-size: 0.9rem;
     margin-bottom: 1rem;
     animation: shake 0.3s ease;
+}
+
+.text-green-600 {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    animation: fadeIn 0.3s ease;
 }
 
 /* Snippet code */
@@ -114,6 +122,44 @@ button:active {
     word-break: break-all;
     border: 1px solid #e2e8f0;
     margin-top: 1rem;
+}
+
+/* Listing grid */
+.grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.grid-cols-1 {
+    grid-template-columns: 1fr;
+}
+
+.md\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.md\:grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 768px) {
+    .md\:grid-cols-2, .md\:grid-cols-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.transition-transform {
+    transition: transform 0.3s ease;
+}
+
+.hover\:scale-105:hover {
+    transform: scale(1.05);
+}
+
+img.object-cover {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
 }
 
 /* Animations */
@@ -153,4 +199,9 @@ button:active {
 iframe .container {
     max-width: 100%;
     padding: 1rem;
+}
+
+/* reCAPTCHA */
+.g-recaptcha {
+    margin-bottom: 1rem;
 }
