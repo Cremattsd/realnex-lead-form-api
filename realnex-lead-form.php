@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: RealNex Lead Form
-Description: Embeds RealNex lead forms in WordPress using iframe snippets.
+Description: Embeds RealNex lead forms and listings in WordPress using iframe snippets.
 Version: 1.0
 Author: Your Name
 */
@@ -17,7 +17,7 @@ function realnex_lead_form_shortcode($atts) {
         array(
             'token' => '',
             'company_id' => '',
-            'type' => 'contact_us',
+            'type' => 'contact',
         ),
         $atts,
         'realnex_lead_form'
@@ -33,19 +33,20 @@ function realnex_lead_form_shortcode($atts) {
     if (empty($token)) {
         return '<p>Error: RealNex token is required.</p>';
     }
-    if ($atts['type'] === 'listings_contact_us' && empty($company_id)) {
-        return '<p>Error: Company ID is required for Listings + Contact Us.</p>';
+    if ($atts['type'] === 'listings' && empty($company_id)) {
+        return '<p>Error: Company ID is required for Listings.</p>';
     }
 
     // Build iframe URL
-    $iframe_url = 'https://realnex-lead-form-api.onrender.com/snippet?snippet_type=' . ($atts['type'] === 'contact_us' ? 'contact' : 'listing');
-    $iframe_url .= '&token=' . esc_attr($token);
-    if ($atts['type'] === 'listings_contact_us' && $company_id) {
-        $iframe_url .= '&company_id=' . esc_attr($company_id);
+    $iframe_url = 'https://realnex-lead-form-api.onrender.com/';
+    if ($atts['type'] === 'contact') {
+        $iframe_url .= 'form?token=' . esc_attr($token);
+    } else {
+        $iframe_url .= 'listings?companyId=' . esc_attr($company_id) . '&token=' . esc_attr($token);
     }
 
     // Return iframe
-    return '<iframe src="' . esc_url($iframe_url) . '" width="100%" height="600" frameborder="0" style="border:0;"></iframe>';
+    return '<iframe src="' . esc_url($iframe_url) . '" width="100%" height="800" frameborder="0" style="border:0;"></iframe>';
 }
 add_shortcode('realnex_lead_form', 'realnex_lead_form_shortcode');
 
