@@ -1,0 +1,41 @@
+<div class="realnex-form-container">
+    <h2 class="realnex-form-title" aria-level="2">Contact Us</h2>
+    <form id="realnex-form-{{ unique_id }}" class="realnex-form" method="POST" action="{{ embed_url }}/submit" aria-labelledby="realnex-form-title-{{ unique_id }}">
+        <input type="hidden" name="unique_id" value="{{ unique_id }}">
+        <div class="realnex-form-field">
+            <label for="realnex_first_name-{{ unique_id }}">First Name</label>
+            <input type="text" id="realnex_first_name-{{ unique_id }}" name="realnex_first_name" placeholder="First Name" required aria-required="true">
+        </div>
+        <div class="realnex-form-field">
+            <label for="realnex_last_name-{{ unique_id }}">Last Name</label>
+            <input type="text" id="realnex_last_name-{{ unique_id }}" name="realnex_last_name" placeholder="Last Name" required aria-required="true">
+        </div>
+        <div class="realnex-form-field">
+            <label for="realnex_email-{{ unique_id }}">Email</label>
+            <input type="email" id="realnex_email-{{ unique_id }}" name="realnex_email" placeholder="Email" required aria-required="true">
+        </div>
+        <div class="realnex-form-field">
+            <label for="realnex_phone-{{ unique_id }}">Phone</label>
+            <input type="tel" id="realnex_phone-{{ unique_id }}" name="realnex_phone" placeholder="Phone" aria-describedby="realnex_phone_desc-{{ unique_id }}">
+            <small id="realnex_phone_desc-{{ unique_id }}" class="realnex-form-help">Optional</small>
+        </div>
+        <div class="realnex-form-field">
+            <label for="realnex_company-{{ unique_id }}">Company</label>
+            <input type="text" id="realnex_company-{{ unique_id }}" name="realnex_company" placeholder="Company" aria-describedby="realnex_company_desc-{{ unique_id }}">
+            <small id="realnex_company_desc-{{ unique_id }}" class="realnex-form-help">Optional</small>
+        </div>
+        <div class="realnex-form-field">
+            <label for="realnex_address-{{ unique_id }}">Address</label>
+            <input type="text" id="realnex_address-{{ unique_id }}" name="realnex_address" placeholder="Address" aria-describedby="realnex_address_desc-{{ unique_id }}">
+            <small id="realnex_address_desc-{{ unique_id }}" class="realnex-form-help">Optional</small>
+        </div>
+        <div class="realnex-form-field">
+            <label for="realnex_comments-{{ unique_id }}">Comments</label>
+            <textarea id="realnex_comments-{{ unique_id }}" name="realnex_comments" placeholder="Comments" aria-describedby="realnex_comments_desc-{{ unique_id }}"></textarea>
+            <small id="realnex_comments_desc-{{ unique_id }}" class="realnex-form-help">Optional</small>
+        </div>
+        <div class="realnex-form-field realnex-submit">
+            <button type="submit" aria-label="Submit Contact Us Form">Submit</button>
+        </div>
+    </form>
+</div>
