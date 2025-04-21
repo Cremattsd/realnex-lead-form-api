@@ -9,9 +9,16 @@ import json
 from datetime import datetime, timedelta
 from urllib.parse import urlparse, quote
 import html
+from flask_cors import CORS  # Added for CORS support
+from dotenv import load_dotenv  # Added for loading .env file
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'  # Replace with a secure key in production
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')  # Load from .env, fallback to default
+CORS(app)  # Enable CORS for all routes
 
 # Configuration
 API_BASE_URL_V1 = "https://sync.realnex.com/api/v1"  # For CRM endpoints (V1 API)
