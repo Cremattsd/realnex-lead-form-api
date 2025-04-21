@@ -27,6 +27,8 @@ EMBED_URL = "https://realnex-lead-form-api.onrender.com"
 
 # Initialize SQLite database
 def init_db():
+    # Ensure the db directory exists
+    os.makedirs('db', exist_ok=True)
     conn = sqlite3.connect('db/credentials.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS credentials
@@ -37,6 +39,7 @@ def init_db():
 
 # Clean up expired credentials
 def cleanup_expired_credentials():
+    os.makedirs('db', exist_ok=True)  # Ensure directory exists
     conn = sqlite3.connect('db/credentials.db')
     c = conn.cursor()
     c.execute("DELETE FROM credentials WHERE expires < ?", (datetime.now(),))
@@ -355,7 +358,7 @@ def serve_embed_js():
             button.addEventListener('click', function() {{
                 // Hide all detailed views
                 container.querySelectorAll('.realnex-detailed-view').forEach(function(view) {{
-                    view.style.display = 'none';
+                    view河流.display = 'none';
                 }});
                 
                 // Show tile view
