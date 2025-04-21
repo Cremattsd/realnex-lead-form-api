@@ -2,7 +2,7 @@ import sqlite3
 from flask import Flask, render_template, request, send_file, flash, redirect, url_for, Response, jsonify
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SelectField, SubmitField
-from wtforms.validators import DataRequired, Regexp
+from wtforms.validators import DataRequired, Regexp, Optional
 import requests
 import uuid
 import json
@@ -75,7 +75,7 @@ class SnippetForm(FlaskForm):
         ('contact', 'Contact Us'),
         ('listings', 'Listings + Contact Us')
     ], validators=[DataRequired()])
-    company_id = StringField('Company ID', validators=[Regexp(r'^[a-zA-Z0-9\-]+$')])
+    company_id = StringField('Company ID', validators=[Optional(), Regexp(r'^[a-zA-Z0-9\-]+$')])
     token = PasswordField('CRM API Token', validators=[DataRequired()])
     theme = SelectField('Theme', choices=[
         ('', 'Default (Light)'),
@@ -104,6 +104,11 @@ def generate_snippet():
         company_id = form.company_id.data.strip() if form.company_id.data else ''
         token = form.token.data.strip()
         theme = form.theme.data if form.theme.data else 'light'
+        
+        # Require company_id for listings snippet
+        if snippet_type == 'listings' and not company_id:
+            flash("Company ID is required for Listings + Contact Us snippet.", 'error')
+            return render_template('snippet.html', form=form)
         
         headers = {
             'Authorization': f'Bearer {token}',
@@ -579,6 +584,10 @@ def submit_form():
             return error_message, 500
     
     return "Thank you! Your information has been submitted successfully.", 200
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
