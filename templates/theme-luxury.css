@@ -1,0 +1,87 @@
+.realnex-form-container, .realnex-listings-container {
+    font-family: 'Montserrat', system-ui, sans-serif;
+    background: #1a1a1a;
+    color: #d4af37;
+    padding: 25px;
+    border: 2px solid #d4af37;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.realnex-listings-container {
+    max-width: 100%;
+}
+
+.realnex-form-container h3, .realnex-listings-container h3 {
+    margin-top: 0;
+    color: #d4af37;
+    font-weight: 700;
+    font-size: 1.4em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: #d4af37;
+    font-weight: 500;
+    font-size: 0.9em;
+    text-transform: uppercase;
+}
+
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d4af37;
+    border-radius: 4px;
+    background: #2a2a2a;
+    color: #fff;
+    box-sizing: border-box;
+    font-size: 0.95em;
+}
+
+.form-group textarea {
+    height: 90px;
+    resize: vertical;
+}
+
+.realnex-form button, .realnex-detailed-view button.back-to-tiles {
+    width: 100%;
+    padding: 12px;
+    background: #d4af37;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    text-transform: uppercase;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.realnex-form button:hover, .realnex-detailed-view button.back-to-tiles:hover {
+    background: #b89730;
+    color: #fff;
+}
+
+.realnex-tile-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.realnex-listing-tile {
+    background: #2a2a2a;
+    padding: 15px;
+    border: 1px solid #d4af37;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition:
