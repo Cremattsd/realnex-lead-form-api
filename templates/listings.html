@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RealNex Listings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=6">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Listings + Contact Us</h1>
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="{{ 'error' if category == 'error' else 'text-green-600' }} mt-4">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+        {% if inquiry_result %}
+            <p class="text-green-600 mt-4">{{ inquiry_result }}</p>
+        {% endif %}
+        {% if listings %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {% for listing in listings %}
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-105">
+                        {% if listing.photos and listing.photos[0] %}
+                            <img src="{{ listing.photos[0].url }}" alt="{{ listing.title }}" class="w-full h-48 object-cover">
+                        {% else %}
+                            <div class="w-full h-48 bg-gray-200 flex items-center justify-center">No Image</div>
+                        {% endif %}
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold">{{ listing.title or 'Untitled Listing' }}</h3>
+                            <p class="text-gray-600">{{ listing.address or 'No address' }}</p>
+                            <form method="POST" action="{{ url_for('listings') }}" class="mt-4 space-y-4">
+                                <input type="hidden" name="listing_id" value="{{ listing.id }}">
+                                <input type="hidden" name="token" value="{{ request.args.get('token') }}">
+                                <div>
+                                    <label class="block mb-1" for="first_name_{{ listing.id }}">First Name</label>
+                                    <input type="text" name="first_name" id="first_name_{{ listing.id }}" class="w-full p-3 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label class="block mb-1" for="last_name_{{ listing.id }}">Last Name</label>
+                                    <input type="text" name="last_name" id="last_name_{{ listing.id }}" class="w-full p-3 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label class="block mb-1" for="email_{{ listing.id }}">Email</label>
+                                    <input type="email" name="email" id="email_{{ listing.id }}" class="w-full p-3 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label class="block mb-1" for="phone_{{ listing.id }}">Phone</label>
+                                    <input type="tel" name="phone" id="phone_{{ listing.id }}" class="w-full p-3 border rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block mb-1" for="message_{{ listing.id }}">Message</label>
+                                    <textarea name="message" id="message_{{ listing.id }}" class="w-full p-3 border rounded-lg"></textarea>
+                                </div>
+                                <button type="submit" class="w-full">Submit Inquiry</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-600 mt-4">No listings available.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
