@@ -3,74 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RealNex Snippet Generator</title>
+    <title>Generate Snippet - RealNex</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-    <div class="card">
-        <h2>RealNex Snippet Generator</h2>
-        
+<body class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 min-h-screen flex items-center justify-center">
+    <div class="bg-white shadow-2xl rounded-lg p-8 max-w-lg w-full">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Generate Your Snippet</h1>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="message {{ category }}">{{ message }}</div>
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        
-        <form method="POST" aria-label="Snippet Generation Form" onsubmit="return validateForm()">
+        <form method="POST" class="space-y-6">
             {{ form.hidden_tag() }}
-            
-            <div class="form-group">
-                <label for="{{ form.snippet_type.id }}">{{ form.snippet_type.label }}</label>
-                {{ form.snippet_type(class="form-control", required=True) }}
+            <div>
+                <label for="snippet_type" class="block text-gray-700 font-semibold mb-2">{{ form.snippet_type.label }}</label>
+                {{ form.snippet_type(class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500") }}
             </div>
-            
-            <div class="form-group">
-                <label for="{{ form.company_id.id }}">{{ form.company_id.label }}</label>
-                {{ form.company_id(class="form-control", placeholder="Enter Company ID (optional for Contact Us)") }}
-                <small class="form-text">Required for Listings + Contact Us Snippet.</small>
+            <div>
+                <label for="company_id" class="block text-gray-700 font-semibold mb-2">{{ form.company_id.label }}</label>
+                {{ form.company_id(class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500", placeholder="Enter your Company ID") }}
             </div>
-            
-            <div class="form-group">
-                <label for="{{ form.token.id }}">{{ form.token.label }}</label>
-                {{ form.token(class="form-control", placeholder="Enter your RealNex token", required=True) }}
+            <div>
+                <label for="token" class="block text-gray-700 font-semibold mb-2">{{ form.token.label }}</label>
+                {{ form.token(class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500", placeholder="Enter your CRM API Token") }}
             </div>
-            
-            <div class="form-group">
-                <label for="{{ form.theme.id }}">{{ form.theme.label }}</label>
-                {{ form.theme(class="form-control") }}
-                <small class="form-text">Select a predefined theme for the form's appearance.</small>
+            <div>
+                <label for="custom_style_url" class="block text-gray-700 font-semibold mb-2">{{ form.custom_style_url.label }}</label>
+                {{ form.custom_style_url(class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500", placeholder="https://example.com/style.css") }}
             </div>
-            
-            <div class="form-group">
-                <label for="{{ form.custom_style_url.id }}">{{ form.custom_style_url.label }}</label>
-                {{ form.custom_style_url(class="form-control", placeholder="e.g., https://example.com/custom.css") }}
-                <small class="form-text">Provide a URL to a custom CSS file for additional form styling (optional).</small>
+            <div>
+                <label for="theme" class="block text-gray-700 font-semibold mb-2">{{ form.theme.label }}</label>
+                {{ form.theme(class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500") }}
             </div>
-            
-            {{ form.submit(class="button") }}
+            <div class="text-center">
+                {{ form.submit(class="bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition duration-300") }}
+            </div>
         </form>
     </div>
-    
-    <script>
-        function validateForm() {
-            const snippetType = document.querySelector('select[name="snippet_type"]').value;
-            const companyId = document.querySelector('input[name="company_id"]').value.trim();
-            const token = document.querySelector('input[name="token"]').value.trim();
-            
-            if (snippetType === 'listings' && !companyId) {
-                alert('Company ID is required for Listings + Contact Us snippet.');
-                return false;
-            }
-            
-            if (token.length < 8) {
-                alert('API Token must be at least 8 characters long.');
-                return false;
-            }
-            
-            return true;
-        }
-    </script>
 </body>
 </html>
