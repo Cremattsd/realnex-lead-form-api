@@ -3,43 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generated Snippet</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Generate Snippet - RealNex</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=6">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <script>
         function toggleCompanyId() {
             const snippetType = document.getElementById('snippet_type').value;
             const companyIdField = document.getElementById('company_id_field');
-            companyIdField.style.display = snippetType === 'listing' ? 'block' : 'none';
+            companyIdField.style.display = snippetType === 'listings' ? 'block' : 'none';
         }
+
+        function copySnippet() {
+            const snippetCode = document.getElementById('snippet-code').textContent;
+            navigator.clipboard.writeText(snippetCode).then(() => {
+                const copyButton = document.getElementById('copy-button');
+                copyButton.textContent = 'Copied!';
+                setTimeout(() => { copyButton.textContent = 'Copy Snippet'; }, 2000);
+            });
+        }
+
         window.onload = toggleCompanyId;
     </script>
 </head>
 <body>
     <div class="container">
-        <h1>Generated Snippet</h1>
-        <form method="POST" action="{{ url_for('snippet') }}">
-            {{ form.hidden_tag() }}
-            <div class="mb-4">
-                {{ form.snippet_type.label(class="block mb-1") }}
-                {{ form.snippet_type(class="w-full p-3 border rounded", onchange="toggleCompanyId()") }}
+        <h1>Generate Your Snippet</h1>
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="{{ 'error' if category == 'error' else 'text-green-600' }} mt-4">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+        <form method="POST" action="{{ url_for('snippet') }}" class="space-y-4">
+            <div>
+                <label class="block mb-1" for="snippet_type">Snippet Type</label>
+                <select name="snippet_type" id="snippet_type" class="w-full p-3 border rounded-lg" onchange="toggleCompanyId()">
+                    <option value="contact" {% if snippet_type == 'contact' %}selected{% endif %}>Contact Us</option>
+                    <option value="listings" {% if snippet_type == 'listings' %}selected{% endif %}>Listings + Contact Us</option>
+                </select>
             </div>
-            <div class="mb-4">
-                {{ form.token.label(class="block mb-1") }}
-                {{ form.token(class="w-full p-3 border rounded") }}
+            <div>
+                <label class="block mb-1" for="token">CRM Token</label>
+                <input type="text" name="token" id="token" value="{{ token }}" class="w-full p-3 border rounded-lg" required>
             </div>
-            <div id="company_id_field" class="mb-4">
-                {{ form.company_id.label(class="block mb-1") }}
-                {{ form.company_id(class="w-full p-3 border rounded") }}
+            <div id="company_id_field" class="space-y-1" style="display: none;">
+                <label class="block mb-1" for="company_id">Company ID</label>
+                <input type="text" name="company_id" id="company_id" value="{{ company_id }}" class="w-full p-3 border rounded-lg">
             </div>
             <button type="submit" class="w-full">Generate Snippet</button>
         </form>
-        {% if error %}
-            <p class="error">{{ error }}</p>
-        {% endif %}
-        {% if snippet_code %}
+        {% if generated_code %}
             <h2 class="text-xl font-semibold mt-6 mb-2">Your Snippet</h2>
-            <pre class="snippet-code">{{ snippet_code }}</pre>
+            <pre id="snippet-code" class="snippet-code">{{ generated_code }}</pre>
+            <button id="copy-button" onclick="copySnippet()" class="mt-2 bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700">Copy Snippet</button>
         {% endif %}
     </div>
 </body>
