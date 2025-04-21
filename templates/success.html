@@ -3,72 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snippet Generated - RealNex Snippet Generator</title>
+    <title>Snippet Generated - RealNex</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + (theme or 'light') + '.css') }}">
+    {% if theme %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + theme + '.css') }}">
+    {% else %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-light.css') }}">
+    {% endif %}
 </head>
-<body>
-    <div class="card">
-        <h2>Snippet Generated Successfully</h2>
-        
-        <p>Your snippet has been generated. Follow the steps below to embed it on your website.</p>
-        
-        <div class="snippet-output">
-            <h3>1. Copy the Embed Code</h3>
-            <p>Add this code to your website (works on any platform, including WordPress, static HTML, etc.):</p>
-            <textarea id="snippet" readonly aria-readonly="true">{{ shortcode }}</textarea>
-            <button class="copy-btn" onclick="copyToClipboard()" onkeypress="if(event.key === 'Enter') copyToClipboard()">Copy to Clipboard</button>
-            
-            <h3>2. Customize Styling</h3>
-            <p>You can customize the appearance of the form using the following options:</p>
-            <ul>
-                <li><strong>Predefined Themes:</strong> The embed code includes a <code>theme</code> parameter (currently set to "{{ theme or 'light' }}"). You can change it to one of the following:
-                    <ul>
-                        <li><code>theme=light</code> - Light theme (default)</li>
-                        <li><code>theme=dark</code> - Dark theme</li>
-                        <li><code>theme=modern</code> - Modern theme</li>
-                    </ul>
-                    Example: <code>&theme=dark</code>
-                </li>
-                <li><strong>Custom CSS:</strong> Add or update the <code>style_url</code> parameter in the script tag to point to your own CSS file:
-                    <pre><script src="...&style_url=https://example.com/custom.css"></script></pre>
-                    Your CSS file can override the default styles. For example:
-                    <pre>
-.realnex-form-container, .realnex-listings-container {{
-    background-color: #f0f8ff; /* Light blue background */
-}}
-.realnex-form button {{
-    background-color: #ff4500; /* Orange-red button */
-}}
-                    </pre>
-                </li>
-            </ul>
-            
-            <h3>3. Preview</h3>
-            <p>This is a preview of what your embed will look like with the selected styling:</p>
-            <div class="preview">
-                {{ preview | safe }}
+<body class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 min-h-screen py-10">
+    <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold text-white text-center mb-8">Your Snippet is Ready!</h1>
+        <div class="bg-white shadow-2xl rounded-lg p-8 flex flex-col md:flex-row gap-8">
+            <!-- Embed Code Section -->
+            <div class="md:w-1/2">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Embed Code</h2>
+                <p class="text-gray-600 mb-4">Copy the code below and paste it into your website:</p>
+                <div class="relative">
+                    <pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto"><code>{{ shortcode }}</code></pre>
+                    <button onclick="copyCode()" class="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition duration-300">Copy</button>
+                </div>
             </div>
-            
-            <h3>4. Troubleshooting</h3>
-            <p>If the form does not load, check the following:</p>
-            <ul>
-                <li>Ensure your API Token and Company ID (if required) are correct.</li>
-                <li>The embed code expires after 24 hours. Generate a new code if needed.</li>
-                <li>Verify that your custom CSS URL (if provided) is accessible and valid.</li>
-                <li>Check your browser's console for error messages.</li>
-            </ul>
-            
-            <p><a href="{{ url_for('index') }}" class="button" role="button" aria-label="Generate Another Snippet">Generate Another Snippet</a></p>
+            <!-- Preview Section -->
+            <div class="md:w-1/2">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Preview</h2>
+                <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                    {{ preview | safe }}
+                </div>
+            </div>
         </div>
     </div>
-    
     <script>
-        function copyToClipboard() {
-            const snippet = document.getElementById('snippet');
-            snippet.select();
-            document.execCommand('copy');
-            alert('Snippet copied to clipboard!');
+        function copyCode() {
+            const code = document.querySelector('pre code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Code copied to clipboard!');
+            });
         }
     </script>
 </body>
