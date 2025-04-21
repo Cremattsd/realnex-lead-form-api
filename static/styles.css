@@ -1,63 +1,156 @@
 /* Tailwind CSS CDN */
 @import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
 
-/* Custom styles */
+/* Custom fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap');
+
+/* Global styles */
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f7fafc;
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
+    color: #2d3748;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
 }
 
+/* Container */
 .container {
-    max-width: 600px;
+    max-width: 800px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 2rem;
+    animation: fadeIn 0.5s ease-in;
 }
 
+/* Headings */
+h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a202c;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    animation: slideIn 0.6s ease-out;
+}
+
+/* Form styles */
 form {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+form:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+}
+
+label {
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+    display: block;
 }
 
 input, select, textarea {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
+    padding: 0.75rem;
     border: 1px solid #e2e8f0;
-    border-radius: 4px;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #2d3748;
+    box-shadow: 0 0 0 3px rgba(45, 55, 72, 0.1);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Button styles */
 button {
-    background-color: #2d3748;
-    color: white;
-    padding: 10px 20px;
+    background: #2d3748;
+    color: #ffffff;
+    padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
     cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
 }
 
 button:hover {
-    background-color: #4a5568;
+    background: #4a5568;
+    transform: scale(1.05);
 }
 
+button:active {
+    transform: scale(0.95);
+}
+
+/* Error messages */
 .error {
     color: #e53e3e;
-    margin-bottom: 10px;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    animation: shake 0.3s ease;
 }
 
+/* Snippet code */
 .snippet-code {
-    background: #edf2f7;
-    padding: 10px;
-    border-radius: 4px;
+    background: #f7fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
     word-break: break-all;
+    border: 1px solid #e2e8f0;
+    margin-top: 1rem;
 }
 
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Responsive design */
 @media (max-width: 640px) {
     .container {
-        padding: 10px;
+        padding: 1rem;
+    }
+    h1 {
+        font-size: 2rem;
     }
     form {
-        padding: 15px;
+        padding: 1.5rem;
     }
+    input, select, textarea {
+        font-size: 0.95rem;
+    }
+}
+
+/* Iframe-specific styles */
+iframe .container {
+    max-width: 100%;
+    padding: 1rem;
 }
