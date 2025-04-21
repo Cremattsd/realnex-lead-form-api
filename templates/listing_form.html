@@ -1,86 +1,74 @@
-<!-- Tile View -->
 <div class="realnex-tile-view">
     {% for listing in listings %}
-        <div class="realnex-listing-tile" data-listing-id="{{ listing.key }}" data-listing="{{ listing | tojson | e }}">
-            {% if listing.thumbnail %}
-                <img src="{{ listing.thumbnail }}" alt="{{ listing.title }}" class="tile-image">
-            {% else %}
-                <div class="tile-placeholder">No Image</div>
-            {% endif %}
-            <h3>{{ listing.title }}</h3>
-            <p class="tile-description">{{ listing.description | truncate(100) }}</p>
-            <p><strong>Address:</strong> {{ listing.address }}</p>
-        </div>
+    <div class="realnex-listing-tile" 
+         data-listing-id="{{ listing.key }}"
+         data-listing="{{ listing | tojson | urlencode }}">
+        {% if listing.thumbnail %}
+        <img src="{{ listing.thumbnail }}" alt="{{ listing.title }}" class="listing-thumbnail">
+        {% else %}
+        <div class="listing-placeholder">No Image</div>
+        {% endif %}
+        <h3>{{ listing.title }}</h3>
+        <p>{{ listing.description }}</p>
+        <p><strong>Address:</strong> {{ listing.address }}</p>
+    </div>
     {% endfor %}
 </div>
 
-<!-- Detailed Views (one per listing, initially hidden) -->
 {% for listing in listings %}
-    <div class="realnex-detailed-view realnex-detailed-view-{{ listing.key }}" style="display: none;">
-        <button class="back-to-tiles" aria-label="Back to Listings">← Back to Listings</button>
-        <div class="listing-details">
-            <div class="carousel">
-                {% if listing.images and listing.images|length > 0 %}
-                    {% for image in listing.images %}
-                        <img src="{{ image.url }}" alt="{{ listing.title }}" class="carousel-image" style="display: none;">
-                    {% endfor %}
-                    <button class="carousel-prev" style="display: none;">←</button>
-                    <button class="carousel-next" style="display: none;">→</button>
-                {% else %}
-                    <div class="carousel-placeholder">No Images Available</div>
-                {% endif %}
-            </div>
-            <h2>{{ listing.title }}</h2>
-            <p><strong>Description:</strong> {{ listing.description }}</p>
-            <p><strong>Address:</strong> {{ listing.address }}</p>
-            <p><strong>Price:</strong> {{ listing.price }}</p>
-            <p><strong>Square Footage:</strong> {{ listing.squareFootage }}</p>
-            
-            <!-- Contact Us Form -->
-            <div class="realnex-form-container">
-                <h3 class="realnex-form-title" aria-level="3">Inquire About This Property</h3>
-                <form id="realnex-form-{{ listing.key }}-{{ unique_id }}" class="realnex-form" method="POST" action="{{ embed_url }}/submit" aria-labelledby="realnex-form-title-{{ listing.key }}-{{ unique_id }}">
-                    <input type="hidden" name="unique_id" value="{{ unique_id }}">
-                    <input type="hidden" name="listing_key" value="{{ listing.key }}">
-                    <input type="hidden" name="listing_title" value="{{ listing.title }}">
-                    <input type="hidden" name="listing_address" value="{{ listing.address }}">
-                    <div class="realnex-form-field">
-                        <label for="realnex_first_name_{{ listing.key }}-{{ unique_id }}">First Name</label>
-                        <input type="text" id="realnex_first_name_{{ listing.key }}-{{ unique_id }}" name="realnex_first_name" placeholder="First Name" required aria-required="true">
-                    </div>
-                    <div class="realnex-form-field">
-                        <label for="realnex_last_name_{{ listing.key }}-{{ unique_id }}">Last Name</label>
-                        <input type="text" id="realnex_last_name_{{ listing.key }}-{{ unique_id }}" name="realnex_last_name" placeholder="Last Name" required aria-required="true">
-                    </div>
-                    <div class="realnex-form-field">
-                        <label for="realnex_email_{{ listing.key }}-{{ unique_id }}">Email</label>
-                        <input type="email" id="realnex_email_{{ listing.key }}-{{ unique_id }}" name="realnex_email" placeholder="Email" required aria-required="true">
-                    </div>
-                    <div class="realnex-form-field">
-                        <label for="realnex_phone_{{ listing.key }}-{{ unique_id }}">Phone</label>
-                        <input type="tel" id="realnex_phone_{{ listing.key }}-{{ unique_id }}" name="realnex_phone" placeholder="Phone" aria-describedby="realnex_phone_desc_{{ listing.key }}-{{ unique_id }}">
-                        <small id="realnex_phone_desc_{{ listing.key }}-{{ unique_id }}" class="realnex-form-help">Optional</small>
-                    </div>
-                    <div class="realnex-form-field">
-                        <label for="realnex_company_{{ listing.key }}-{{ unique_id }}">Company</label>
-                        <input type="text" id="realnex_company_{{ listing.key }}-{{ unique_id }}" name="realnex_company" placeholder="Company" aria-describedby="realnex_company_desc_{{ listing.key }}-{{ unique_id }}">
-                        <small id="realnex_company_desc_{{ listing.key }}-{{ unique_id }}" class="realnex-form-help">Optional</small>
-                    </div>
-                    <div class="realnex-form-field">
-                        <label for="realnex_address_{{ listing.key }}-{{ unique_id }}">Address</label>
-                        <input type="text" id="realnex_address_{{ listing.key }}-{{ unique_id }}" name="realnex_address" placeholder="Address" aria-describedby="realnex_address_desc_{{ listing.key }}-{{ unique_id }}">
-                        <small id="realnex_address_desc_{{ listing.key }}-{{ unique_id }}" class="realnex-form-help">Optional</small>
-                    </div>
-                    <div class="realnex-form-field">
-                        <label for="realnex_comments_{{ listing.key }}-{{ unique_id }}">Comments</label>
-                        <textarea id="realnex_comments_{{ listing.key }}-{{ unique_id }}" name="realnex_comments" placeholder="Comments" aria-describedby="realnex_comments_desc_{{ listing.key }}-{{ unique_id }}"></textarea>
-                        <small id="realnex_comments_desc_{{ listing.key }}-{{ unique_id }}" class="realnex-form-help">Optional</small>
-                    </div>
-                    <div class="realnex-form-field realnex-submit">
-                        <button type="submit" aria-label="Submit Inquiry for {{ listing.title }}">Inquire</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+<div class="realnex-detailed-view realnex-detailed-view-{{ listing.key }}" style="display: none;">
+    <div class="carousel">
+        {% if listing.images %}
+        {% for image in listing.images %}
+        <img src="{{ image.url }}" alt="{{ listing.title }}" class="carousel-image" style="display: none;">
+        {% endfor %}
+        <button class="carousel-prev" style="display: none;">Previous</button>
+        <button class="carousel-next" style="display: none;">Next</button>
+        {% else %}
+        <div class="listing-placeholder">No Images Available</div>
+        {% endif %}
     </div>
+    <h3>{{ listing.title }}</h3>
+    <p>{{ listing.description }}</p>
+    <p><strong>Address:</strong> {{ listing.address }}</p>
+    <p><strong>Price:</strong> {{ listing.price }}</p>
+    <p><strong>Square Footage:</strong> {{ listing.squareFootage }}</p>
+    
+    <form class="realnex-form" method="POST" action="{{ embed_url }}/submit">
+        <input type="hidden" name="unique_id" value="{{ unique_id }}">
+        <input type="hidden" name="listing_key" value="{{ listing.key }}">
+        <input type="hidden" name="listing_title" value="{{ listing.title }}">
+        <input type="hidden" name="listing_address" value="{{ listing.address }}">
+        <div class="form-group">
+            <label for="realnex_first_name_{{ listing.key }}">First Name *</label>
+            <input type="text" id="realnex_first_name_{{ listing.key }}" name="realnex_first_name" required>
+        </div>
+        <div class="form-group">
+            <label for="realnex_last_name_{{ listing.key }}">Last Name *</label>
+            <input type="text" id="realnex_last_name_{{ listing.key }}" name="realnex_last_name" required>
+        </div>
+        <div class="form-group">
+            <label for="realnex_email_{{ listing.key }}">Email *</label>
+            <input type="email" id="realnex_email_{{ listing.key }}" name="realnex_email" required>
+        </div>
+        <div class="form-group">
+            <label for="realnex_phone_{{ listing.key }}">Phone</label>
+            <input type="tel" id="realnex_phone_{{ listing.key }}" name="realnex_phone">
+        </div>
+        <div class="form-group">
+            <label for="realnex_company_{{ listing.key }}">Company</label>
+            <input type="text" id="realnex_company_{{ listing.key }}" name="realnex_company">
+        </div>
+        <div class="form-group">
+            <label for="realnex_address_{{ listing.key }}">Address</label>
+            <input type="text" id="realnex_address_{{ listing.key }}" name="realnex_address">
+        </div>
+        <div class="form-group">
+            <label for="realnex_comments_{{ listing.key }}">Comments</label>
+            <textarea id="realnex_comments_{{ listing.key }}" name="realnex_comments"></textarea>
+        </div>
+        <button type="submit">Inquire</button>
+    </form>
+    <button class="back-to-tiles">Back to Listings</button>
+</div>
 {% endfor %}
