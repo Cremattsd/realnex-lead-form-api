@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Matt's Widget Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(to bottom, #1a202c, #2d3748); color: white; }
+        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        .form-group { margin-bottom: 20px; }
+        select, input { background: #4a5568; color: white; border: none; }
+        #company_id_field { display: none; }
+    </style>
+    <script>
+        function toggleCompanyId() {
+            var widgetType = document.getElementById('widget_type').value;
+            document.getElementById('company_id_field').style.display = widgetType === 'listings' ? 'block' : 'none';
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-4xl font-bold mb-8 text-center">Create Your Real Estate Widget</h1>
+        <form method="post" action="/generate" class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <div class="form-group">
+                <label class="block text-lg mb-2">CRM Token</label>
+                <input type="text" name="token" class="w-full p-3 rounded" required>
+            </div>
+            <div class="form-group">
+                <label class="block text-lg mb-2">Widget Type</label>
+                <select name="widget_type" id="widget_type" onchange="toggleCompanyId()" class="w-full p-3 rounded" required>
+                    <option value="contact">Contact Us Widget</option>
+                    <option value="listings">Listings + Contact Us Widget</option>
+                </select>
+            </div>
+            <div id="company_id_field" class="form-group">
+                <label class="block text-lg mb-2">Company ID</label>
+                <input type="text" name="company_id" class="w-full p-3 rounded">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Generate Widget</button>
+        </form>
+    </div>
+</body>
+</html>
