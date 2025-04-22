@@ -88,7 +88,7 @@ def handle_crm_logic(token, company_id, name, email, message, property_address=N
         else:
             return {'error': 'Failed to create contact', 'details': contact_response.text}
 
-    # Create company if needed (simplified, assumes companyId is company key)
+    # Create company if needed
     company_url = f'{V1_API_URL}/Crm/companies/{company_id}'
     company_response = requests.get(company_url, headers=headers)
     log_api_call(company_url, {'companyId': company_id}, company_response.status_code, company_response.text)
@@ -171,7 +171,7 @@ def generate():
     return render_template('success.html', iframe_code=iframe_code, widget_type=widget_type)
 
 # Render widget
-@app.route('/render')
+@app.route('/render', methods=['GET', 'POST'])
 def render():
     token = request.args.get('token')
     company_id = request.args.get('companyId')
@@ -223,7 +223,7 @@ def render():
             
             return render_template('contact_success.html')
         
-        return render_template('contact.html', company_id=company_id, token=token)
+        return render_template('contact_form.html', company_id=company_id, token=token)
 
     return jsonify({'error': 'Invalid render type'}), 400
 
