@@ -1,25 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submission Successful - RealNex</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=6">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title>Widget Generated</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(to bottom, #1a202c, #2d3748); color: white; }
+        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        code { background: #4a5568; padding: 10px; display: block; }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Thank You, {{ first_name }}!</h1>
-        <p class="text-gray-600 mt-4">Your lead has been successfully submitted to RealNex CRM.</p>
-        <p class="text-gray-600">Details:</p>
-        <ul class="list-disc pl-5 mt-2">
-            <li><strong>Name:</strong> {{ first_name }} {{ last_name }}</li>
-            <li><strong>Email:</strong> {{ email }}</li>
-            {% if company %}
-                <li><strong>Company:</strong> {{ company }}</li>
-            {% endif %}
-        </ul>
-        <a href="{{ url_for('index') }}" class="mt-6 inline-block bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700">Back to Home</a>
+        <h1 class="text-4xl font-bold mb-8 text-center">Success!</h1>
+        <p class="text-lg mb-4">Your {{ widget_type }} widget is ready! Copy this iframe code to embed it on any website:</p>
+        <code>{{ iframe_code }}</code>
+        <p class="mt-4">Paste this into your website's HTML (e.g., WordPress, Wix, Squarespace).</p>
     </div>
 </body>
 </html>
